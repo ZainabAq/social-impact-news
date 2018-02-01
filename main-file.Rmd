@@ -1,0 +1,47 @@
+---
+title: "main-file"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Remains the same for everyone
+```{r}
+library(readr)
+# change this according to your
+data_10000 <- read_csv("Raw data_10000 articles_Jul-Dec 2017.csv")
+```
+
+
+# Sections for everyone
+
+# Minji
+
+```{r}
+
+```
+
+
+# Erina
+
+```{r}
+
+```
+
+
+# Julianna 
+
+```{r}
+
+```
+
+
+# Zainab
+
+```{r}
+
+```
+
+
