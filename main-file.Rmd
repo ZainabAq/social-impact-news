@@ -41,7 +41,56 @@ data_10000 <- read_csv("Raw data_10000 articles_Jul-Dec 2017.csv")
 # Zainab
 
 ```{r}
+require(mosaic)
+favstats(data_10000$Views)
 
+c <- ggplot(data_10000, aes(Views))
+c+geom_histogram()
+
+fav_stats(data_10000$`Engaged minutes`)
+d <- ggplot(data_10000, aes(`Engaged minutes`))
+d+geom_histogram()
+
+ggplot(data_10000, aes_string(x = "`Social refs`", y = "`Engaged minutes`")) +
+  theme_bw() +
+  geom_jitter()
+
+ggplot(data_10000, aes_string(x = "`Returning vis.`", y = "`Engaged minutes`")) +
+  theme_bw() +
+  geom_jitter()
+
+ggplot(data_10000, aes_string(x = "Visitors", y = "`Engaged minutes`")) +
+  theme_bw() +
+  geom_jitter()
+
+data_10000 = data_10000 %>%
+  mutate(logEngMins = log(`Engaged minutes`))
+
+data_10000 = data_10000 %>%
+  mutate(logRetVisitors = log(`Returning vis.`))
+
+ggplot(data_10000, aes_string(x = "logRetVisitors", y = "logEngMins")) +
+  theme_bw() +
+  geom_jitter()
+
+c <- ggplot(data_10000, aes(logRetVisitors))
+c+geom_histogram()
+
+f <- ggplot(data_10000, aes(logEngMins))
+f+geom_histogram()
+
+ggplot(data_10000, aes_string(x = "`Social refs`", y = "Visitors")) +
+  theme_bw() +
+  geom_jitter()
+
+ggplot(data_10000, aes_string(x = "`Social refs`", y = "`New vis.`")) +
+  theme_bw() +
+  geom_jitter()
+
+
+data_10000 %>%
+  select(c(`Returning vis.`,`Social refs`, `Engaged minutes`, `Avg. views new vis.`, Views, Visitors, `New vis.`))%>%
+  cor()
 ```
 
 
