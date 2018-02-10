@@ -1,3 +1,6 @@
+# To run:
+# python3 Parser.py [name of .csv file]
+
 from bs4 import BeautifulSoup
 import requests
 import sys
