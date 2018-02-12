@@ -34,7 +34,43 @@ data_10000 <- read_csv("Raw data_10000 articles_Jul-Dec 2017.csv")
 # Julianna 
 
 ```{r}
+data_10000 %>%
+  arrange(`Engaged minutes`) %>%
+  select(Title)
 
+ggplot(data = data_10000, aes(log(`Social interactions`))) + geom_histogram()
+
+ggplot(data = data_10000, aes(log(`Views`))) + geom_histogram()
+
+ggplot(data = data_10000, aes(`Views`)) + geom_histogram()
+
+test <- data_10000 %>%
+  mutate(`huff_metric` = `Social interactions`/ `Views`, log_huff_metric = log(huff_metric)) %>%
+  arrange(desc(huff_metric))
+
+fav_stats(test$log_huff_metric)
+
+ggplot(data = test, aes(log(`huff_metric`))) + geom_histogram()
+
+ggplot(data = test, aes(x = log(`Social interactions`), y = log(`Engaged minutes`))) + geom_point() + 
+  geom_smooth()
+
+test <- test %>%
+  mutate(log_social_interactions = log(`Social interactions`), log_engaged_minutes = log(`Engaged minutes`), log_views = log(`Views`))
+
+cor(test$log_social_interactions, test$log_engaged_minutes, use = "complete.obs")
+
+qqnorm(test$log_huff_metric)
+qqline(test$log_huff_metric, col = "red")
+
+qqnorm(test$log_social_interactions)
+qqline(test$log_social_interactions, col = "red")
+
+qqnorm(test$Views)
+qqline(test$Views, col = "red")
+
+qqnorm(test$log_views)
+qqline(test$log_views, col = "red")
 ```
 
 
