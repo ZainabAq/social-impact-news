@@ -106,38 +106,98 @@ Eng_sort <-data_10000%>%
 # Julianna 
 
 ```{r}
+#Which articles have the highest engaged mins?
 data_10000 %>%
   arrange(`Engaged minutes`) %>%
   select(Title)
 
-ggplot(data = data_10000, aes(log(`Social interactions`))) + geom_histogram()
+#Which articles have the highest social interactions?
+data_10000 %>%
+  arrange(`Social interactions`) %>%
+  select(Title)
 
-ggplot(data = data_10000, aes(log(`Views`))) + geom_histogram()
+#Scatterplot Matrix
+pairs(~`Social interactions`+`Engaged minutes`+`Views`+`Social refs`+`Returning vis.`, data=data_10000, main="Simple Scatterplot Matrix")
 
-ggplot(data = data_10000, aes(`Views`)) + geom_histogram()
+#cor matrix
+selected_data <- test %>%
+  select(`Social interactions`,`Engaged minutes`,`Views`,`Social refs`,`Returning vis.`, `huff_metric`)
 
+library(Hmisc)
+res2 <- rcorr(as.matrix(selected_data))
+res2
+
+####Basic stats
+
+#huff_metric
+  #Creating huff metric
 test <- data_10000 %>%
   mutate(`huff_metric` = `Social interactions`/ `Views`, log_huff_metric = log(huff_metric)) %>%
   arrange(desc(huff_metric))
 
-fav_stats(test$log_huff_metric)
+#Looking at titles of highest huff metric data
+highest_huff <- test %>%
+  select(Title, huff_metric, Section)
+
+highest_huff_100 <- highest_huff[1:100,]
+
+#How many "impact" articles
+tally(highest_huff_100$Section)
+
+tally(test$Section)
+
+  #now the stats
+favstats(test$huff_metric)
+
+ggplot(data = test, aes(`huff_metric`)) + geom_histogram()
 
 ggplot(data = test, aes(log(`huff_metric`))) + geom_histogram()
+  #testing normality
+qqnorm(test$log_huff_metric)
+qqline(test$log_huff_metric, col = "red")
+
+
+#creating log variables
+test <- test %>%
+  mutate(log_social_interactions = log(`Social interactions`), log_engaged_minutes = log(`Engaged minutes`), log_views = log(`Views`))
+
+#Social interactions
+favstats(test$`Social interactions`)
+
+ggplot(data = test, aes(`Social interactions`)) + geom_histogram()
+
+ggplot(data = test, aes(log(`Social interactions`))) + geom_histogram()
+
+  #Testing normality
+qqnorm(test$log_social_interactions)
+qqline(test$log_social_interactions, col = "red")
+
+  #engaged vs social interactions
+ggplot(data = test, aes(x = `Social interactions`, y = `Engaged minutes`)) + geom_point() + 
+  geom_smooth()
 
 ggplot(data = test, aes(x = log(`Social interactions`), y = log(`Engaged minutes`))) + geom_point() + 
   geom_smooth()
 
-test <- test %>%
-  mutate(log_social_interactions = log(`Social interactions`), log_engaged_minutes = log(`Engaged minutes`), log_views = log(`Views`))
+#Engaged Minutes
+favstats(test$`Engaged minutes`)
 
-cor(test$log_social_interactions, test$log_engaged_minutes, use = "complete.obs")
+ggplot(data = test, aes(`Engaged minutes`)) + geom_histogram()
 
-qqnorm(test$log_huff_metric)
-qqline(test$log_huff_metric, col = "red")
+ggplot(data = test, aes(log(`Engaged minutes`))) + geom_histogram()
 
-qqnorm(test$log_social_interactions)
-qqline(test$log_social_interactions, col = "red")
+  #Testing normality
+qqnorm(test$log_engaged_minutes)
+qqline(test$log_engaged_minutes, col = "red")
 
+#Views
+favstats(test$Views)
+
+ggplot(data = test, aes(`Views`)) + geom_histogram()
+
+ggplot(data = test, aes(log(`Views`))) + geom_histogram()
+
+  #Testing normality
 qqnorm(test$Views)
 qqline(test$Views, col = "red")
 
