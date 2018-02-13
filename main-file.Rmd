@@ -127,7 +127,7 @@ library(Hmisc)
 res2 <- rcorr(as.matrix(selected_data))
 res2
 
-####Basic stats
+####Basic stats------------------------------------------
 
 #huff_metric
   #Creating huff metric
@@ -203,6 +203,83 @@ qqline(test$Views, col = "red")
 
 qqnorm(test$log_views)
 qqline(test$log_views, col = "red")
+
+##MODELS--------------------------------------------------
+
+#Finding predictors from backward and stepwise regression
+fullmodel <- lm(`huff_metric`~`Views`+`Engaged minutes`+`Returning vis.`+`New vis.`+`Social refs`+`Social interactions`+`Avg. minutes new vis.`+`Avg. minutes ret. vis.`+`Visitors`+`Avg. views new vis.`+`Avg. views ret. vis.`, data = test)
+# backward
+fullMSE <- (summary(fullmodel)$sigma)^2
+step(fullmodel, data = test, scale = fullMSE, direction = "backward")
+
+test<-na.omit(test)
+#stepwise
+nullmodel <- lm(`huff_metric` ~ 1, data = test)
+step(nullmodel, scope = list(upper = fullmodel),
+scale = fullMSE, direction = "both")
+
+#Stepwise gave me this model:
+mod_huff <- lm(formula = huff_metric ~ `Social interactions` + `Avg. minutes ret. vis.` + 
+    `Returning vis.` + `Engaged minutes` + `New vis.` + `Social refs` + 
+    Views + `Avg. views new vis.`, data = test)
+
+summary(mod_huff)
+
+plot(mod_huff)
+
+  #cor matrix for the model
+selected_data_mod_step <- test %>%
+  select(`Social interactions`, `Avg. minutes ret. vis.`, 
+    `Returning vis.`, `Engaged minutes`, `New vis.`, `Social refs`, 
+    Views, `Avg. views new vis.`)
+
+  #Nothing abnormally high except (engaged min and returning visitors), (new vis and views), (Social refs and views)
+res2 <- rcorr(as.matrix(selected_data_mod_step))
+res2
+
+  #checking VIF
+library(car)
+vif(mod_huff)
+#There are big issues of multicollinearity in this model
+
+##How about best subset approach?
+library(leaps)
+
+allsubset<-regsubsets(`huff_metric`~`Views`+`Engaged minutes`+`Returning vis.`+`New vis.`+`Social refs`+`Social interactions`+`Avg. minutes new vis.`+`Avg. minutes ret. vis.`+`Visitors`+`Avg. views new vis.`+`Avg. views ret. vis.`, data = test)
+options(digits=3)
+
+summary(allsubset)$adjr2
+plot(allsubset,scale="adjr2")
+
+summary(allsubset)$cp
+plot(allsubset,scale="Cp")
+
+#Gives us THIS model:
+mod_all <- lm(`huff_metric`~`Views`+`Engaged minutes`+`Returning vis.`+`New vis.`+`Social refs`+`Social interactions`+`Avg. minutes ret. vis.`+ `Avg. views new vis.`, data = test)
+
+summary(mod_all)
+
+  #Checking for multicollinearity again
+selected_data_mod_best <- test %>%
+  select(`Views`,`Engaged minutes`,`Returning vis.`,`New vis.`,`Social refs`,`Social interactions`,`Avg. minutes ret. vis.`,`Avg. views new vis.`)
+
+res2 <- rcorr(as.matrix(selected_data_mod_best))
+res2
+
+vif(mod_all)
+  #Way better with multicollinearity!
+
+#checking section
+mod_all_sec1 <- lm(`huff_metric`~`Views`+`Engaged minutes`+`Returning vis.`+`New vis.`+`Social refs`+`Social interactions`+`Avg. minutes ret. vis.`+ `Avg. views new vis.`+Section, data = test)
+
+summary(mod_all_sec1)
+
+test_comb_section <- test %>%
+  mutate(black_voices = ifelse(Section == "Black Voices", "yes", "no"))
+#what happens when I add that to the model?
+mod_all_sec <- lm(`huff_metric`~`Views`+`Engaged minutes`+`Returning vis.`+`New vis.`+`Social refs`+`Social interactions`+`Avg. minutes ret. vis.`+ `Avg. views new vis.`+black_voices, data = test_comb_section)
+
+#This should be something we consider. Do sections fit into theoretical definition of social impact?
 ```
 
 
