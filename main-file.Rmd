@@ -20,6 +20,78 @@ data_10000 <- read_csv("Raw data_10000 articles_Jul-Dec 2017.csv")
 # Minji
 
 ```{r}
+##removing na's and creating the existing metric
+Sint_PV <- data_10000%>%
+  mutate(metric = `Social interactions`/Views)%>%
+  arrange(desc(metric))%>%
+  na.omit(`Engaged minutes`)%>%
+  na.omit(`Social interactions`)
+
+##creating vectors 
+engaged_min <- Sint_PV$`Engaged minutes`
+metric <-Sint_PV$metric
+soc_int <- Sint_PV$`Social interactions`
+pv <- Sint_PV$`Sort (Views)`
+rv <- Sint_PV$`Returning vis.`
+
+##looking at the correlations
+cor(engaged_min, soc_int)
+cor(engaged_min, metric)
+cor(engaged_min, pv)
+cor(engaged_min, rv)
+cor(rv, metric)
+
+##fitting it into a pareto distribution
+library(EnvStats)
+PVdf <- data.frame(dpareto(pv,1,1))
+RVdf <- data.frame(dpareto(rv,1,1))
+Sintdf <- data.frame(dpareto(soc_int,1,1))
+engmin<-data.frame(dpareto(engaged_min, 1, 1))
+
+##Calculating the MLE for pareto distribution. 
+pareto.MLE <- function(X)
+{
+   n <- length(X)
+   m <- min(X)
+   a <- n/sum(log(X)-log(m))
+   return( c(m,a) ) 
+}
+
+##output of the pareto function.
+library(VGAM)
+set.seed(1)
+pareto.MLE(PVdf)
+pareto.MLE(RVdf)
+pareto.MLE(engmin)
+pareto.MLE(Sintdf)
+
+
+##mean of Page View
+(7.407267e-05*1.516749e-13)/(7.407267e-05-1)
+##sd of Page View
+(1.516749e-13^2*7.407267e-05)/((7.407267e-05-1)^2*(7.407267e-05-1))
+
+##mean of Returing Views 
+(9.826825e-05*4.418560e-12)/(9.826825e-05-1)
+##sd of Returing Views
+(4.418560e-12^2*9.826825e-05)/((9.826825e-05-1)^2*(9.826825e-05-1))
+
+##mean of engaged min
+(7.573356e-05*3.401360e-13)/(7.573356e-05-1)
+##sd of engaged min
+(3.401360e-13^2*7.573356e-05)/((7.573356e-05-1)^2*(7.573356e-05-1))
+
+##mean of Socail interaction
+(4.628359e-05*3.827637e-13)/(4.628359e-05-1)
+##sd of Socail interaction 
+(3.827637e-13*4.628359e-05)/((4.628359e-05-1)^2*(4.628359e-05-1))
+
+
+
+##looking at the top engaged mins
+Eng_sort <-data_10000%>%
+  arrange(desc(`Engaged minutes`))
+
 
 ```
 
