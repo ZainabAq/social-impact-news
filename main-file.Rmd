@@ -238,6 +238,11 @@ qqline(test$log_views, col = "red")
 
 #Finding predictors from backward and stepwise regression
 fullmodel <- lm(`huff_metric`~`Views`+`Engaged minutes`+`Returning vis.`+`New vis.`+`Social refs`+`Social interactions`+`Avg. minutes new vis.`+`Avg. minutes ret. vis.`+`Visitors`+`Avg. views new vis.`+`Avg. views ret. vis.`, data = test)
+
+#Using log variables
+fullmodel <- lm(log_huff_metric~`Views`+log_engaged_minutes+`Returning vis.`+`New vis.`+`Social refs`+log_social_interactions+`Avg. minutes new vis.`+`Avg. minutes ret. vis.`+`Visitors`+`Avg. views new vis.`+`Avg. views ret. vis.`, data = test)
+
+
 # backward
 fullMSE <- (summary(fullmodel)$sigma)^2
 step(fullmodel, data = test, scale = fullMSE, direction = "backward")
@@ -284,19 +289,41 @@ plot(allsubset,scale="adjr2")
 summary(allsubset)$cp
 plot(allsubset,scale="Cp")
 
+#Using log variables
+allsubset_log<-regsubsets(log_huff_metric~`Views`+`Engaged minutes`+`Returning vis.`+`New vis.`+`Social refs`+`Social interactions`+`Avg. minutes new vis.`+`Avg. minutes ret. vis.`+`Visitors`+`Avg. views new vis.`+`Avg. views ret. vis.`, data = test)
+options(digits=3)
+
+summary(allsubset_log)$adjr2
+plot(allsubset_log,scale="adjr2")
+
+summary(allsubset_log)$cp
+plot(allsubset_log,scale="Cp")
+
 #Gives us THIS model:
-mod_all <- lm(`huff_metric`~`Views`+`Engaged minutes`+`Returning vis.`+`New vis.`+`Social refs`+`Social interactions`+`Avg. minutes ret. vis.`+ `Avg. views new vis.`, data = test)
+mod_all <- lm(`huff_metric`~`Views`+`Engaged minutes`+`Returning vis.`+`New vis.`+`Social interactions`+`Social refs`+`Avg. minutes ret. vis.`, data = test)
 
 summary(mod_all)
 
+#Log
+mod_all_log <- lm(log_huff_metric~`Views`+`Returning vis.`+`New vis.`+`Social refs`+`Social interactions`+`Avg. minutes ret. vis.`+ `Avg. minutes new vis.`+Visitors, data = test)
+
+summary(mod_all_log)
+
+car::vif(mod_all_log)
+
+plot(mod_all_log)
+
   #Checking for multicollinearity again
 selected_data_mod_best <- test %>%
-  select(`Views`,`Engaged minutes`,`Returning vis.`,`New vis.`,`Social refs`,`Social interactions`,`Avg. minutes ret. vis.`,`Avg. views new vis.`)
+  select(`Views`,`Engaged minutes`,`Returning vis.`,`New vis.`,`Social refs`,`Social interactions`,`Avg. minutes ret. vis.`)
 
+library(Hmisc)
 res2 <- rcorr(as.matrix(selected_data_mod_best))
 res2
 
 car::vif(mod_all)
+
+plot(mod_all)
   #Way better with multicollinearity!
 
 #checking section
