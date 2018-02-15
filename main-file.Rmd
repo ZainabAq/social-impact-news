@@ -180,7 +180,15 @@ mosaic::favstats(test$`Social interactions`)
 
 ggplot(data = test, aes(`Social interactions`)) + geom_histogram()
 
+ggplot(test, aes(`Social interactions`)) + 
+    geom_histogram(aes(y=..density..),fill="gray40") +
+    geom_density(alpha=.2, color = "red")
+
 ggplot(data = test, aes(log(`Social interactions`))) + geom_histogram()
+
+ggplot(test, aes(log(`Social interactions`))) + 
+    geom_histogram(aes(y=..density..),fill="gray40") +
+    geom_density(alpha=.2, color = "red")
 
   #Testing normality
 qqnorm(test$log_social_interactions)
@@ -198,7 +206,15 @@ mosaic::favstats(test$`Engaged minutes`)
 
 ggplot(data = test, aes(`Engaged minutes`)) + geom_histogram()
 
+ggplot(test, aes(`Engaged minutes`)) + 
+    geom_histogram(aes(y=..density..),fill="gray40") +
+    geom_density(alpha=.2, color = "red")
+
 ggplot(data = test, aes(log(`Engaged minutes`))) + geom_histogram()
+
+ggplot(test, aes(log(`Engaged minutes`))) + 
+    geom_histogram(aes(y=..density..),fill="gray40") +
+    geom_density(alpha=.2, color = "red")
 
   #Testing normality
 qqnorm(test$log_engaged_minutes)
@@ -280,7 +296,7 @@ selected_data_mod_best <- test %>%
 res2 <- rcorr(as.matrix(selected_data_mod_best))
 res2
 
-vif(mod_all)
+car::vif(mod_all)
   #Way better with multicollinearity!
 
 #checking section
