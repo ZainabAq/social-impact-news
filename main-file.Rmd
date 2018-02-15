@@ -8,7 +8,8 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 # Remains the same for everyone
-```{r}
+```{r, message=FALSE}
+library(tidyverse)
 library(readr)
 # change this according to your
 data_10000 <- read_csv("Raw data_10000 articles_Jul-Dec 2017.csv")
@@ -40,7 +41,18 @@ cor(engaged_min, metric)
 cor(engaged_min, pv)
 cor(engaged_min, rv)
 cor(rv, metric)
+```
 
+[Log-normal distribution](https://en.wikipedia.org/wiki/Log-normal_distribution) seems reasonable? 
+
+```{r}
+ggplot(Sint_PV, aes(x = log(metric))) + 
+  geom_density()
+```
+
+Use MLE to find best-fit parameters? 
+
+```{r}
 ##fitting it into a pareto distribution
 library(EnvStats)
 PVdf <- data.frame(dpareto(pv,1,1))
@@ -119,13 +131,7 @@ data_10000 %>%
 #Scatterplot Matrix
 pairs(~`Social interactions`+`Engaged minutes`+`Views`+`Social refs`+`Returning vis.`, data=data_10000, main="Simple Scatterplot Matrix")
 
-#cor matrix
-selected_data <- test %>%
-  select(`Social interactions`,`Engaged minutes`,`Views`,`Social refs`,`Returning vis.`, `huff_metric`)
 
-library(Hmisc)
-res2 <- rcorr(as.matrix(selected_data))
-res2
 
 ####Basic stats------------------------------------------
 
@@ -141,13 +147,21 @@ highest_huff <- test %>%
 
 highest_huff_100 <- highest_huff[1:100,]
 
-#How many "impact" articles
-tally(highest_huff_100$Section)
+#cor matrix
+selected_data <- test %>%
+  select(`Social interactions`,`Engaged minutes`,`Views`,`Social refs`,`Returning vis.`, `huff_metric`)
 
-tally(test$Section)
+library(Hmisc)
+res2 <- rcorr(as.matrix(selected_data))
+res2
+
+#How many "impact" articles
+mosaic::tally(highest_huff_100$Section)
+
+mosaic::tally(test$Section)
 
   #now the stats
-favstats(test$huff_metric)
+mosaic::favstats(test$huff_metric)
 
 ggplot(data = test, aes(`huff_metric`)) + geom_histogram()
 
@@ -162,7 +176,7 @@ test <- test %>%
   mutate(log_social_interactions = log(`Social interactions`), log_engaged_minutes = log(`Engaged minutes`), log_views = log(`Views`))
 
 #Social interactions
-favstats(test$`Social interactions`)
+mosaic::favstats(test$`Social interactions`)
 
 ggplot(data = test, aes(`Social interactions`)) + geom_histogram()
 
@@ -180,7 +194,7 @@ ggplot(data = test, aes(x = log(`Social interactions`), y = log(`Engaged minutes
   geom_smooth()
 
 #Engaged Minutes
-favstats(test$`Engaged minutes`)
+mosaic::favstats(test$`Engaged minutes`)
 
 ggplot(data = test, aes(`Engaged minutes`)) + geom_histogram()
 
@@ -191,7 +205,7 @@ qqnorm(test$log_engaged_minutes)
 qqline(test$log_engaged_minutes, col = "red")
 
 #Views
-favstats(test$Views)
+mosaic::favstats(test$Views)
 
 ggplot(data = test, aes(`Views`)) + geom_histogram()
 
