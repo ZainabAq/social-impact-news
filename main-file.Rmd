@@ -25,14 +25,17 @@ Sint_PV <- data_10000%>%
   mutate(metric = `Social interactions`/Views)%>%
   arrange(desc(metric))%>%
   na.omit(`Engaged minutes`)%>%
-  na.omit(`Social interactions`)
+  na.omit(`Social interactions`)%>%
+  na.omit(`Sort (Views)`)
 
 ##creating vectors 
-engaged_min <- Sint_PV$`Engaged minutes`
-metric <-Sint_PV$metric
-soc_int <- Sint_PV$`Social interactions`
-pv <- Sint_PV$`Sort (Views)`
-rv <- Sint_PV$`Returning vis.`
+engaged_min <- data.frame(Sint_PV$`Engaged minutes`)
+metric <-data.frame(Sint_PV$metric)
+soc_int <- data.frame(Sint_PV$`Social interactions`)
+pv <- data.frame(Sint_PV$Views)
+rv <- data.frame(Sint_PV$`Returning vis.`)
+
+V <- Sint_PV$Views
 
 ##looking at the correlations
 cor(engaged_min, soc_int)
@@ -41,58 +44,23 @@ cor(engaged_min, pv)
 cor(engaged_min, rv)
 cor(rv, metric)
 
-##fitting it into a pareto distribution
-library(EnvStats)
-PVdf <- data.frame(dpareto(pv,1,1))
-RVdf <- data.frame(dpareto(rv,1,1))
-Sintdf <- data.frame(dpareto(soc_int,1,1))
-engmin<-data.frame(dpareto(engaged_min, 1, 1))
-
-##Calculating the MLE for pareto distribution. 
-pareto.MLE <- function(X)
-{
-   n <- length(X)
-   m <- min(X)
-   a <- n/sum(log(X)-log(m))
-   return( c(m,a) ) 
-}
-
-##output of the pareto function.
-library(VGAM)
-set.seed(1)
-pareto.MLE(PVdf)
-pareto.MLE(RVdf)
-pareto.MLE(engmin)
-pareto.MLE(Sintdf)
-
 
 ##mean of Page View
-(7.407267e-05*1.516749e-13)/(7.407267e-05-1)
+(14511*2.161506e-04)/(0.4751 - 1)
 ##sd of Page View
-(1.516749e-13^2*7.407267e-05)/((7.407267e-05-1)^2*(7.407267e-05-1))
-
-##mean of Returing Views 
-(9.826825e-05*4.418560e-12)/(9.826825e-05-1)
-##sd of Returing Views
-(4.418560e-12^2*9.826825e-05)/((9.826825e-05-1)^2*(9.826825e-05-1))
-
-##mean of engaged min
-(7.573356e-05*3.401360e-13)/(7.573356e-05-1)
-##sd of engaged min
-(3.401360e-13^2*7.573356e-05)/((7.573356e-05-1)^2*(7.573356e-05-1))
-
-##mean of Socail interaction
-(4.628359e-05*3.827637e-13)/(4.628359e-05-1)
-##sd of Socail interaction 
-(3.827637e-13*4.628359e-05)/((4.628359e-05-1)^2*(4.628359e-05-1))
+(14511^2*2.161506e-04)/((2.161506e-04-1)^2*(2.161506e-04-2))
 
 
+library(ParetoPosStable)
+pareto.fit(V, estim.method = "MLE")
 
-##looking at the top engaged mins
-Eng_sort <-data_10000%>%
-  arrange(desc(`Engaged minutes`))
+p <- ggplot(pv, aes(V)) + geom_histogram(aes(y=..density..), bins = 100)
+p+ stat_function(fun = dpareto, args = list(7795, 0.4751), color = "red")
 
+ggplot(pv, aes(log(V))) + geom_histogram(aes(y=..density..), bins = 100 ) + stat_function(fun = dnorm, args = list(11.68749, 1.013802), color = "red")
 
+favstats(~log(Sint_PV.Views), data = pv)
+favstats(~log(Sint_PV.metric), data = metric)
 ```
 
 
