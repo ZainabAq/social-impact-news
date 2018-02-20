@@ -163,9 +163,17 @@ mosaic::tally(test$Section)
   #now the stats
 mosaic::favstats(test$huff_metric)
 
-ggplot(data = test, aes(`huff_metric`)) + geom_histogram()
+ggplot2::ggplot(data = test, aes(`huff_metric`)) + geom_histogram()
+
+ggplot(test, aes(`huff_metric`)) + 
+    geom_histogram(aes(y=..density..),fill="gray40") +
+    geom_density(alpha=.2, color = "red")
 
 ggplot(data = test, aes(log(`huff_metric`))) + geom_histogram()
+
+ggplot(test, aes(log(`huff_metric`))) + 
+    geom_histogram(aes(y=..density..),fill="gray40") +
+    geom_density(alpha=.2, color = "red")
   #testing normality
 qqnorm(test$log_huff_metric)
 qqline(test$log_huff_metric, col = "red")
@@ -337,6 +345,22 @@ test_comb_section <- test %>%
 mod_all_sec <- lm(`huff_metric`~`Views`+`Engaged minutes`+`Returning vis.`+`New vis.`+`Social refs`+`Social interactions`+`Avg. minutes ret. vis.`+ `Avg. views new vis.`+black_voices, data = test_comb_section)
 
 #This should be something we consider. Do sections fit into theoretical definition of social impact?
+
+##how about engaged minutes per viewer?
+test <- test %>%
+  mutate(engaged_min_per_view = `Engaged minutes`/Views, engaged_min_per_ret_vis = `Engaged minutes`/`Returning vis.`)%>%
+  arrange(desc(engaged_min_per_ret_vis))
+
+mosaic::favstats(test$engaged_min_per_view)
+
+ggplot(test, aes(engaged_min_per_view)) + geom_histogram()
+
+mosaic::favstats(test$engaged_min_per_ret_vis)
+
+ggplot(test, aes(log(engaged_min_per_ret_vis))) + geom_histogram()
+
+###--------------------------------
+  
 ```
 
 
