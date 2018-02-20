@@ -8,8 +8,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 # Remains the same for everyone
-```{r, message=FALSE}
-library(tidyverse)
+```{r}
 library(readr)
 # change this according to your
 data_10000 <- read_csv("Raw data_10000 articles_Jul-Dec 2017.csv")
@@ -32,7 +31,7 @@ Sint_PV <- data_10000%>%
 engaged_min <- Sint_PV$`Engaged minutes`
 metric <-Sint_PV$metric
 soc_int <- Sint_PV$`Social interactions`
-pv <- Sint_PV$`Sort (Views)`
+pv <- Sint_PV$`Views`
 rv <- Sint_PV$`Returning vis.`
 
 ##looking at the correlations
@@ -41,69 +40,23 @@ cor(engaged_min, metric)
 cor(engaged_min, pv)
 cor(engaged_min, rv)
 cor(rv, metric)
-```
 
-[Log-normal distribution](https://en.wikipedia.org/wiki/Log-normal_distribution) seems reasonable? 
+##Pareto Distribution
+library(ParetoPosStable)
+pareto.fit(pv, estim.method = "MLE")
 
-```{r}
-ggplot(Sint_PV, aes(x = log(metric))) + 
-  geom_density()
-```
+ggplot(pv, aes(log(V))) + geom_histogram(aes(y=..density..), bins = 100 ) + stat_function(fun = dnorm, args = list(11.68749, 1.013802), color = "red")
 
-Use MLE to find best-fit parameters? 
+p <- ggplot(pv, aes(V)) + geom_histogram(aes(y=..density..), bins = 100) 
+p+ stat_function(fun = dpareto, args = list(7795, 0.4751), color = "red")
 
-```{r}
-##fitting it into a pareto distribution
-library(EnvStats)
-PVdf <- data.frame(dpareto(pv,1,1))
-RVdf <- data.frame(dpareto(rv,1,1))
-Sintdf <- data.frame(dpareto(soc_int,1,1))
-engmin<-data.frame(dpareto(engaged_min, 1, 1))
-
-##Calculating the MLE for pareto distribution. 
-pareto.MLE <- function(X)
-{
-   n <- length(X)
-   m <- min(X)
-   a <- n/sum(log(X)-log(m))
-   return( c(m,a) ) 
-}
-
-##output of the pareto function.
-library(VGAM)
-set.seed(1)
-pareto.MLE(PVdf)
-pareto.MLE(RVdf)
-pareto.MLE(engmin)
-pareto.MLE(Sintdf)
+###################################################################################################
 
 
-##mean of Page View
-(7.407267e-05*1.516749e-13)/(7.407267e-05-1)
-##sd of Page View
-(1.516749e-13^2*7.407267e-05)/((7.407267e-05-1)^2*(7.407267e-05-1))
-
-##mean of Returing Views 
-(9.826825e-05*4.418560e-12)/(9.826825e-05-1)
-##sd of Returing Views
-(4.418560e-12^2*9.826825e-05)/((9.826825e-05-1)^2*(9.826825e-05-1))
-
-##mean of engaged min
-(7.573356e-05*3.401360e-13)/(7.573356e-05-1)
-##sd of engaged min
-(3.401360e-13^2*7.573356e-05)/((7.573356e-05-1)^2*(7.573356e-05-1))
-
-##mean of Socail interaction
-(4.628359e-05*3.827637e-13)/(4.628359e-05-1)
-##sd of Socail interaction 
-(3.827637e-13*4.628359e-05)/((4.628359e-05-1)^2*(4.628359e-05-1))
-
-
-
-##looking at the top engaged mins
-Eng_sort <-data_10000%>%
-  arrange(desc(`Engaged minutes`))
-
+merged_200 <- read_csv("merged_200.csv")
+minji_50 <- merged_200[101:150,]
+write.table(minji_50, file="minji_50.csv",sep=",",row.names=F)
+minji_50_impact <- read_csv("minji_50_impact.csv")
 
 ```
 
@@ -111,58 +64,149 @@ Eng_sort <-data_10000%>%
 # Erina
 
 ```{r}
+# data_1000_EF<- read_csv("Raw data_10000 articles_Jul-Dec 2017.csv")
+# names(data_1000_EF)
+# lm1 <- lm(log(`Engaged minutes`)~.-URL-Title-Authors-Tags,data=data_1000_EF)
+# summary(lm1)
+# anova(lm1)
+# 
+# plot(lm1)
+# summary(data_1000_EF)
 
+library(readr)
+library(tidytext)
+library(dplyr)
+library(stringr)
+
+data_EF <- read_csv("Raw data_10000 articles_Jul-Dec 2017.csv") #import original data
+
+data("stop_words") #import stop words
+text <- read_csv("text-data.csv") %>%
+  select(URL, article) #import textual data
+
+text$article<- str_replace_all(text$article, "[[:punct:]]", "") #omit special characters
+afinn <- get_sentiments("afinn")
+
+afinn_neg5 <- get_sentiments("afinn") %>%
+    filter(score == -5)
+afinn_neg4 <- get_sentiments("afinn") %>%
+    filter(score == -4)
+afinn_neg3 <- get_sentiments("afinn") %>%
+    filter(score == -3)
+afinn_neg2 <- get_sentiments("afinn") %>%
+    filter(score == -2)
+afinn_neg1 <- get_sentiments("afinn") %>%
+    filter(score == -1)
+afinn_0 <- get_sentiments("afinn") %>%
+    filter(score == 0)
+afinn_pos1 <- get_sentiments("afinn") %>%
+    filter(score == 1)
+afinn_pos2 <- get_sentiments("afinn") %>%
+    filter(score == 2)
+afinn_pos3 <- get_sentiments("afinn") %>%
+    filter(score == 3)
+afinn_pos4 <- get_sentiments("afinn") %>%
+    filter(score == 4)
+afinn_pos5 <- get_sentiments("afinn") %>%
+    filter(score == 5)
+
+
+words <- text %>%
+#  group_by(URL) %>%
+  unnest_tokens(word, article)
+
+words <- words %>%
+  anti_join(stop_words)
+
+neg5 <- words %>%
+  group_by(URL) %>%
+	inner_join(afinn_neg5) %>%
+	count(word, sort=TRUE)
+
+neg4 <- words %>%
+  group_by(URL) %>%
+	inner_join(afinn_neg4) %>%
+	count(word, sort=TRUE)
+
+neg3 <- words %>%
+  group_by(URL) %>%
+	inner_join(afinn_neg3) %>%
+	count(word, sort=TRUE)
+
+neg2 <- words %>%
+  group_by(URL) %>%
+	inner_join(afinn_neg2) %>%
+	count(word, sort=TRUE)
+
+neg1 <- words %>%
+  group_by(URL) %>%
+	inner_join(afinn_neg1) %>%
+	count(word, sort=TRUE)
+
+zero <- words %>%
+  group_by(URL) %>%
+	inner_join(afinn_0) %>%
+	count(word, sort=TRUE)
+
+pos1 <- words %>%
+  group_by(URL) %>%
+	inner_join(afinn_pos1) %>%
+	count(word, sort=TRUE)
+
+pos2 <- words %>%
+  group_by(URL) %>%
+	inner_join(afinn_pos2) %>%
+	count(word, sort=TRUE)
+
+pos3 <- words %>%
+  group_by(URL) %>%
+	inner_join(afinn_pos3) %>%
+	count(word, sort=TRUE)
+
+pos4 <- words %>%
+  group_by(URL) %>%
+	inner_join(afinn_pos4) %>%
+	count(word, sort=TRUE)
+
+pos5 <- words %>%
+  group_by(URL) %>%
+	inner_join(afinn_pos5) %>%
+	count(word, sort=TRUE)
+
+###at "2.2 Sentiment analysis with inner join"
 ```
 
 
-# Julianna 
-
 ```{r}
-#Which articles have the highest engaged mins?
-data_10000 %>%
-  arrange(`Engaged minutes`) %>%
-  select(Title)
-
-#Which articles have the highest social interactions?
-data_10000 %>%
-  arrange(`Social interactions`) %>%
-  select(Title)
-
-#Scatterplot Matrix
-pairs(~`Social interactions`+`Engaged minutes`+`Views`+`Social refs`+`Returning vis.`, data=data_10000, main="Simple Scatterplot Matrix")
+#####Erina continued
 
 
 
-####Basic stats------------------------------------------
+words %>%
+	group_by(URL) %>%
+	inner_join() %>%
+	count(word, sort=TRUE)
 
-#huff_metric
-  #Creating huff metric
-test <- data_10000 %>%
-  mutate(`huff_metric` = `Social interactions`/ `Views`, log_huff_metric = log(huff_metric)) %>%
-  arrange(desc(huff_metric))
+words %>%
+	group_by(URL) %>%
+	inner_join(afinn_neg5) %>%
+	count(word, sort=TRUE)
 
-#Looking at titles of highest huff metric data
-highest_huff <- test %>%
-  select(Title, huff_metric, Section)
+words <- words %>%
+  group_by(URL) %>%
+  mutate(proportion = n / sum(n))
 
-highest_huff_100 <- highest_huff[1:100,]
+words <- words%>%
+  count(word, sort = TRUE) %>%
+  #select(-n) %>% 
+  spread(URL, proportion) %>% 
+  gather(URL, proportion, 2:3)
 
-#cor matrix
-selected_data <- test %>%
-  select(`Social interactions`,`Engaged minutes`,`Views`,`Social refs`,`Returning vis.`, `huff_metric`)
 
-library(Hmisc)
-res2 <- rcorr(as.matrix(selected_data))
-res2
 
-#How many "impact" articles
-mosaic::tally(highest_huff_100$Section)
-
-mosaic::tally(test$Section)
-
-  #now the stats
-mosaic::favstats(test$huff_metric)
-
+#words %>%
+ # group_by(article) %>%
+  #count(word, sort = TRUE) 
 ggplot2::ggplot(data = test, aes(`huff_metric`)) + geom_histogram()
 
 ggplot(test, aes(`huff_metric`)) + 
@@ -178,64 +222,50 @@ ggplot(test, aes(log(`huff_metric`))) +
 qqnorm(test$log_huff_metric)
 qqline(test$log_huff_metric, col = "red")
 
+#write.csv(text, file = "C:/Users/choco/Desktop/SPRING 2018/Capstone/text_cleanedinR.csv") #create new csv file
+```
 
-#creating log variables
-test <- test %>%
-  mutate(log_social_interactions = log(`Social interactions`), log_engaged_minutes = log(`Engaged minutes`), log_views = log(`Views`))
+Social impact:change in way of thinking/attitude or brings someone to take action or change the way they act; leaves an impression or makes the reader think even if it doesn’t change his or her views
+Quality Journalism:accurate, clear, multiple sources, relevance, change in way of thinking/attitude/action (includes above)
+_Social impact can be a smaller part of quality journalism but not vice versa?_
+https://www.huffingtonpost.com/2012/04/16/huffington-post-pulitzer-prize-2012_n_1429169.html
 
-#Social interactions
-mosaic::favstats(test$`Social interactions`)
 
-ggplot(data = test, aes(`Social interactions`)) + geom_histogram()
+# Julianna 
 
-ggplot(test, aes(`Social interactions`)) + 
-    geom_histogram(aes(y=..density..),fill="gray40") +
-    geom_density(alpha=.2, color = "red")
+```{r}
+data_10000 %>%
+  arrange(`Engaged minutes`) %>%
+  select(Title)
 
-ggplot(data = test, aes(log(`Social interactions`))) + geom_histogram()
+ggplot(data = data_10000, aes(log(`Social interactions`))) + geom_histogram()
 
-ggplot(test, aes(log(`Social interactions`))) + 
-    geom_histogram(aes(y=..density..),fill="gray40") +
-    geom_density(alpha=.2, color = "red")
+ggplot(data = data_10000, aes(log(`Views`))) + geom_histogram()
 
-  #Testing normality
-qqnorm(test$log_social_interactions)
-qqline(test$log_social_interactions, col = "red")
+ggplot(data = data_10000, aes(`Views`)) + geom_histogram()
 
-  #engaged vs social interactions
-ggplot(data = test, aes(x = `Social interactions`, y = `Engaged minutes`)) + geom_point() + 
-  geom_smooth()
+test <- data_10000 %>%
+  mutate(`huff_metric` = `Social interactions`/ `Views`, log_huff_metric = log(huff_metric)) %>%
+  arrange(desc(huff_metric))
+
+fav_stats(test$log_huff_metric)
+
+ggplot(data = test, aes(log(`huff_metric`))) + geom_histogram()
 
 ggplot(data = test, aes(x = log(`Social interactions`), y = log(`Engaged minutes`))) + geom_point() + 
   geom_smooth()
 
-#Engaged Minutes
-mosaic::favstats(test$`Engaged minutes`)
+test <- test %>%
+  mutate(log_social_interactions = log(`Social interactions`), log_engaged_minutes = log(`Engaged minutes`), log_views = log(`Views`))
 
-ggplot(data = test, aes(`Engaged minutes`)) + geom_histogram()
+cor(test$log_social_interactions, test$log_engaged_minutes, use = "complete.obs")
 
-ggplot(test, aes(`Engaged minutes`)) + 
-    geom_histogram(aes(y=..density..),fill="gray40") +
-    geom_density(alpha=.2, color = "red")
+qqnorm(test$log_huff_metric)
+qqline(test$log_huff_metric, col = "red")
 
-ggplot(data = test, aes(log(`Engaged minutes`))) + geom_histogram()
+qqnorm(test$log_social_interactions)
+qqline(test$log_social_interactions, col = "red")
 
-ggplot(test, aes(log(`Engaged minutes`))) + 
-    geom_histogram(aes(y=..density..),fill="gray40") +
-    geom_density(alpha=.2, color = "red")
-
-  #Testing normality
-qqnorm(test$log_engaged_minutes)
-qqline(test$log_engaged_minutes, col = "red")
-
-#Views
-mosaic::favstats(test$Views)
-
-ggplot(data = test, aes(`Views`)) + geom_histogram()
-
-ggplot(data = test, aes(log(`Views`))) + geom_histogram()
-
-  #Testing normality
 qqnorm(test$Views)
 qqline(test$Views, col = "red")
 
@@ -359,8 +389,6 @@ mosaic::favstats(test$engaged_min_per_ret_vis)
 
 ggplot(test, aes(log(engaged_min_per_ret_vis))) + geom_histogram()
 
-###--------------------------------
-  
 ```
 
 
