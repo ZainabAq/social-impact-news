@@ -76,6 +76,30 @@ minji_50_impact <- read_csv("minji_50_impact.csv")
 # Erina
 
 ```{r}
+#join manually rated impact scores
+MK <- read_csv("C:/Users/choco/Desktop/SPRING 2018/Capstone/minji_50_impact.csv") %>%
+  select(-X1) #import original data
+JA <- read_csv("C:/Users/choco/Desktop/SPRING 2018/Capstone/julianna_50_impact.csv")  %>%
+  select(-X1)#import original data
+ZA <- read_csv("C:/Users/choco/Desktop/SPRING 2018/Capstone/zainab_50_impact.csv")  %>%
+  select(-X1)#import original data
+EF <- read_csv("C:/Users/choco/Desktop/SPRING 2018/Capstone/erina_50_impact.csv") %>%
+  select(-X1) #import original data
+
+MK$`Publish date` = as.character(MK$`Publish date`)
+JA$`Publish date` = as.character(JA$`Publish date`)
+ZA$`Publish date` = as.character(ZA$`Publish date`)
+EF$`Publish date` = as.character(EF$`Publish date`)
+
+rated_200 <- rbind(MK, JA)
+rated_200 <- rbind(rated_200,ZA)
+rated_200 <- rbind(rated_200,EF)
+
+write.csv(rated_200, file = "C:/Users/choco/Desktop/SPRING 2018/Capstone/rated_200.csv")
+```
+
+
+```{r}
 # data_1000_EF<- read_csv("Raw data_10000 articles_Jul-Dec 2017.csv")
 # names(data_1000_EF)
 # lm1 <- lm(log(`Engaged minutes`)~.-URL-Title-Authors-Tags,data=data_1000_EF)
@@ -88,6 +112,7 @@ minji_50_impact <- read_csv("minji_50_impact.csv")
 library(readr)
 library(tidytext)
 library(dplyr)
+library(tidyr)
 library(stringr)
 
 data_EF <- read_csv("Raw data_10000 articles_Jul-Dec 2017.csv") #import original data
@@ -134,58 +159,148 @@ neg5 <- words %>%
   group_by(URL) %>%
 	inner_join(afinn_neg5) %>%
 	count(word, sort=TRUE)
+neg5$score <- "-5"
 
 neg4 <- words %>%
   group_by(URL) %>%
 	inner_join(afinn_neg4) %>%
 	count(word, sort=TRUE)
+neg4$score <- "-4"
 
 neg3 <- words %>%
   group_by(URL) %>%
 	inner_join(afinn_neg3) %>%
 	count(word, sort=TRUE)
+neg3$score <- "-3"
 
 neg2 <- words %>%
   group_by(URL) %>%
 	inner_join(afinn_neg2) %>%
 	count(word, sort=TRUE)
+neg2$score <- "-2"
 
 neg1 <- words %>%
   group_by(URL) %>%
 	inner_join(afinn_neg1) %>%
 	count(word, sort=TRUE)
-
-zero <- words %>%
-  group_by(URL) %>%
-	inner_join(afinn_0) %>%
-	count(word, sort=TRUE)
+neg1$score <- "-1"
 
 pos1 <- words %>%
   group_by(URL) %>%
 	inner_join(afinn_pos1) %>%
 	count(word, sort=TRUE)
+pos1$score <- "1"
 
 pos2 <- words %>%
   group_by(URL) %>%
 	inner_join(afinn_pos2) %>%
 	count(word, sort=TRUE)
+pos2$score <- "2"
 
 pos3 <- words %>%
   group_by(URL) %>%
 	inner_join(afinn_pos3) %>%
 	count(word, sort=TRUE)
+pos3$score <- "3"
 
 pos4 <- words %>%
   group_by(URL) %>%
 	inner_join(afinn_pos4) %>%
 	count(word, sort=TRUE)
+pos4$score <- "4"
 
 pos5 <- words %>%
   group_by(URL) %>%
 	inner_join(afinn_pos5) %>%
 	count(word, sort=TRUE)
+pos5$score <- "5"
 
-###at "2.2 Sentiment analysis with inner join"
+neg5_2 <- neg5 %>%
+  group_by(URL) %>%
+  summarise(n_sum=sum(n))
+neg5_2$score <- "neg5"
+
+neg4_2 <- neg4 %>%
+  group_by(URL) %>%
+  summarise(n_sum=sum(n))
+neg4_2$score <- "neg4"
+
+neg3_2 <- neg3 %>%
+  group_by(URL) %>%
+  summarise(n_sum=sum(n))
+neg3_2$score <- "neg3"
+
+neg2_2 <- neg2 %>%
+  group_by(URL) %>%
+  summarise(n_sum=sum(n))
+neg2_2$score <- "neg2"
+
+neg1_2 <- neg1 %>%
+  group_by(URL) %>%
+  summarise(n_sum=sum(n))
+neg1_2$score <- "neg1"
+
+pos1_2 <- pos1 %>%
+  group_by(URL) %>%
+  summarise(n_sum=sum(n))
+pos1_2$score <- "pos1"
+
+pos2_2 <- pos2 %>%
+  group_by(URL) %>%
+  summarise(n_sum=sum(n))
+pos2_2$score <- "pos2"
+
+pos3_2 <- pos3 %>%
+  group_by(URL) %>%
+  summarise(n_sum=sum(n))
+pos3_2$score <- "pos3"
+
+pos4_2 <- pos4 %>%
+  group_by(URL) %>%
+  summarise(n_sum=sum(n))
+pos4_2$score <- "pos4"
+
+pos5_2 <- pos5 %>%
+  group_by(URL) %>%
+  summarise(n_sum=sum(n))
+pos5_2$score <- "pos5"
+
+# rbindfunc <- function(sentiments,x){
+#   sentiments <- rbind(sentiments,x)
+# return(sentiments)
+# }
+
+#lapply(rbindfunc,rbindfunc(sentiment,c(neg3_2,neg2_2,neg1_2,pos1_2,pos2_2,pos3_2,pos4_2,pos5_2)))
+
+sentiment <- rbind(neg5_2, neg4_2)
+sentiment <- rbind(sentiment, neg3_2)
+sentiment <- rbind(sentiment, neg2_2)
+sentiment <- rbind(sentiment, neg1_2)
+sentiment <- rbind(sentiment, pos1_2)
+sentiment <- rbind(sentiment, pos2_2)
+sentiment <- rbind(sentiment, pos3_2)
+sentiment <- rbind(sentiment, pos4_2)
+sentiment <- rbind(sentiment, pos5_2)
+
+sentiment <- sentiment %>%
+  spread(key=score, value=n_sum)
+
+sentiment[is.na(sentiment)] <- 0
+
+sentiment <- sentiment %>%
+  mutate(total_n = neg5+neg4+neg3+neg2+neg1+pos1+pos2+pos3+pos4+pos5) %>%
+  mutate(neg5=neg5/total_n) %>%
+  mutate(neg4=neg4/total_n) %>%
+  mutate(neg3=neg3/total_n) %>%
+  mutate(neg2=neg2/total_n) %>%
+  mutate(neg1=neg1/total_n) %>%
+  mutate(pos1=pos1/total_n)%>%
+  mutate(pos2=pos2/total_n)%>%
+  mutate(pos3=pos3/total_n)%>%
+  mutate(pos4=pos4/total_n)%>%
+  mutate(pos5=pos5/total_n)
+
+data_added_sentiment <- full_join(data_EF,sentiment,by="URL")
 ```
 
 ```{r}
