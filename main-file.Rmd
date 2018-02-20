@@ -8,8 +8,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 # Remains the same for everyone
-```{r, message=FALSE}
-library(tidyverse)
+```{r}
 library(readr)
 # change this according to your
 data_10000 <- read_csv("Raw data_10000 articles_Jul-Dec 2017.csv")
@@ -32,7 +31,7 @@ Sint_PV <- data_10000%>%
 engaged_min <- Sint_PV$`Engaged minutes`
 metric <-Sint_PV$metric
 soc_int <- Sint_PV$`Social interactions`
-pv <- Sint_PV$`Sort (Views)`
+pv <- Sint_PV$`Views`
 rv <- Sint_PV$`Returning vis.`
 
 ##looking at the correlations
@@ -41,69 +40,23 @@ cor(engaged_min, metric)
 cor(engaged_min, pv)
 cor(engaged_min, rv)
 cor(rv, metric)
-```
 
-[Log-normal distribution](https://en.wikipedia.org/wiki/Log-normal_distribution) seems reasonable? 
+##Pareto Distribution
+library(ParetoPosStable)
+pareto.fit(pv, estim.method = "MLE")
 
-```{r}
-ggplot(Sint_PV, aes(x = log(metric))) + 
-  geom_density()
-```
+ggplot(pv, aes(log(V))) + geom_histogram(aes(y=..density..), bins = 100 ) + stat_function(fun = dnorm, args = list(11.68749, 1.013802), color = "red")
 
-Use MLE to find best-fit parameters? 
+p <- ggplot(pv, aes(V)) + geom_histogram(aes(y=..density..), bins = 100) 
+p+ stat_function(fun = dpareto, args = list(7795, 0.4751), color = "red")
 
-```{r}
-##fitting it into a pareto distribution
-library(EnvStats)
-PVdf <- data.frame(dpareto(pv,1,1))
-RVdf <- data.frame(dpareto(rv,1,1))
-Sintdf <- data.frame(dpareto(soc_int,1,1))
-engmin<-data.frame(dpareto(engaged_min, 1, 1))
-
-##Calculating the MLE for pareto distribution. 
-pareto.MLE <- function(X)
-{
-   n <- length(X)
-   m <- min(X)
-   a <- n/sum(log(X)-log(m))
-   return( c(m,a) ) 
-}
-
-##output of the pareto function.
-library(VGAM)
-set.seed(1)
-pareto.MLE(PVdf)
-pareto.MLE(RVdf)
-pareto.MLE(engmin)
-pareto.MLE(Sintdf)
+###################################################################################################
 
 
-##mean of Page View
-(7.407267e-05*1.516749e-13)/(7.407267e-05-1)
-##sd of Page View
-(1.516749e-13^2*7.407267e-05)/((7.407267e-05-1)^2*(7.407267e-05-1))
-
-##mean of Returing Views 
-(9.826825e-05*4.418560e-12)/(9.826825e-05-1)
-##sd of Returing Views
-(4.418560e-12^2*9.826825e-05)/((9.826825e-05-1)^2*(9.826825e-05-1))
-
-##mean of engaged min
-(7.573356e-05*3.401360e-13)/(7.573356e-05-1)
-##sd of engaged min
-(3.401360e-13^2*7.573356e-05)/((7.573356e-05-1)^2*(7.573356e-05-1))
-
-##mean of Socail interaction
-(4.628359e-05*3.827637e-13)/(4.628359e-05-1)
-##sd of Socail interaction 
-(3.827637e-13*4.628359e-05)/((4.628359e-05-1)^2*(4.628359e-05-1))
-
-
-
-##looking at the top engaged mins
-Eng_sort <-data_10000%>%
-  arrange(desc(`Engaged minutes`))
-
+merged_200 <- read_csv("merged_200.csv")
+minji_50 <- merged_200[101:150,]
+write.table(minji_50, file="minji_50.csv",sep=",",row.names=F)
+minji_50_impact <- read_csv("minji_50_impact.csv")
 
 ```
 
@@ -266,225 +219,43 @@ https://www.huffingtonpost.com/2012/04/16/huffington-post-pulitzer-prize-2012_n_
 # Julianna 
 
 ```{r}
-#Which articles have the highest engaged mins?
 data_10000 %>%
   arrange(`Engaged minutes`) %>%
   select(Title)
 
-#Which articles have the highest social interactions?
-data_10000 %>%
-  arrange(`Social interactions`) %>%
-  select(Title)
+ggplot(data = data_10000, aes(log(`Social interactions`))) + geom_histogram()
 
-#Scatterplot Matrix
-pairs(~`Social interactions`+`Engaged minutes`+`Views`+`Social refs`+`Returning vis.`, data=data_10000, main="Simple Scatterplot Matrix")
+ggplot(data = data_10000, aes(log(`Views`))) + geom_histogram()
 
+ggplot(data = data_10000, aes(`Views`)) + geom_histogram()
 
-
-####Basic stats------------------------------------------
-
-#huff_metric
-  #Creating huff metric
 test <- data_10000 %>%
   mutate(`huff_metric` = `Social interactions`/ `Views`, log_huff_metric = log(huff_metric)) %>%
   arrange(desc(huff_metric))
 
-#Looking at titles of highest huff metric data
-highest_huff <- test %>%
-  select(Title, huff_metric, Section)
-
-highest_huff_100 <- highest_huff[1:100,]
-
-#cor matrix
-selected_data <- test %>%
-  select(`Social interactions`,`Engaged minutes`,`Views`,`Social refs`,`Returning vis.`, `huff_metric`)
-
-library(Hmisc)
-res2 <- rcorr(as.matrix(selected_data))
-res2
-
-#How many "impact" articles
-mosaic::tally(highest_huff_100$Section)
-
-mosaic::tally(test$Section)
-
-  #now the stats
-mosaic::favstats(test$huff_metric)
-
-ggplot(data = test, aes(`huff_metric`)) + geom_histogram()
+fav_stats(test$log_huff_metric)
 
 ggplot(data = test, aes(log(`huff_metric`))) + geom_histogram()
-  #testing normality
-qqnorm(test$log_huff_metric)
-qqline(test$log_huff_metric, col = "red")
-
-
-#creating log variables
-test <- test %>%
-  mutate(log_social_interactions = log(`Social interactions`), log_engaged_minutes = log(`Engaged minutes`), log_views = log(`Views`))
-
-#Social interactions
-mosaic::favstats(test$`Social interactions`)
-
-ggplot(data = test, aes(`Social interactions`)) + geom_histogram()
-
-ggplot(test, aes(`Social interactions`)) + 
-    geom_histogram(aes(y=..density..),fill="gray40") +
-    geom_density(alpha=.2, color = "red")
-
-ggplot(data = test, aes(log(`Social interactions`))) + geom_histogram()
-
-ggplot(test, aes(log(`Social interactions`))) + 
-    geom_histogram(aes(y=..density..),fill="gray40") +
-    geom_density(alpha=.2, color = "red")
-
-  #Testing normality
-qqnorm(test$log_social_interactions)
-qqline(test$log_social_interactions, col = "red")
-
-  #engaged vs social interactions
-ggplot(data = test, aes(x = `Social interactions`, y = `Engaged minutes`)) + geom_point() + 
-  geom_smooth()
 
 ggplot(data = test, aes(x = log(`Social interactions`), y = log(`Engaged minutes`))) + geom_point() + 
   geom_smooth()
 
-#Engaged Minutes
-mosaic::favstats(test$`Engaged minutes`)
+test <- test %>%
+  mutate(log_social_interactions = log(`Social interactions`), log_engaged_minutes = log(`Engaged minutes`), log_views = log(`Views`))
 
-ggplot(data = test, aes(`Engaged minutes`)) + geom_histogram()
+cor(test$log_social_interactions, test$log_engaged_minutes, use = "complete.obs")
 
-ggplot(test, aes(`Engaged minutes`)) + 
-    geom_histogram(aes(y=..density..),fill="gray40") +
-    geom_density(alpha=.2, color = "red")
+qqnorm(test$log_huff_metric)
+qqline(test$log_huff_metric, col = "red")
 
-ggplot(data = test, aes(log(`Engaged minutes`))) + geom_histogram()
+qqnorm(test$log_social_interactions)
+qqline(test$log_social_interactions, col = "red")
 
-ggplot(test, aes(log(`Engaged minutes`))) + 
-    geom_histogram(aes(y=..density..),fill="gray40") +
-    geom_density(alpha=.2, color = "red")
-
-  #Testing normality
-qqnorm(test$log_engaged_minutes)
-qqline(test$log_engaged_minutes, col = "red")
-
-#Views
-mosaic::favstats(test$Views)
-
-ggplot(data = test, aes(`Views`)) + geom_histogram()
-
-ggplot(data = test, aes(log(`Views`))) + geom_histogram()
-
-  #Testing normality
 qqnorm(test$Views)
 qqline(test$Views, col = "red")
 
 qqnorm(test$log_views)
 qqline(test$log_views, col = "red")
-
-##MODELS--------------------------------------------------
-
-#Finding predictors from backward and stepwise regression
-fullmodel <- lm(`huff_metric`~`Views`+`Engaged minutes`+`Returning vis.`+`New vis.`+`Social refs`+`Social interactions`+`Avg. minutes new vis.`+`Avg. minutes ret. vis.`+`Visitors`+`Avg. views new vis.`+`Avg. views ret. vis.`, data = test)
-
-#Using log variables
-fullmodel <- lm(log_huff_metric~`Views`+log_engaged_minutes+`Returning vis.`+`New vis.`+`Social refs`+log_social_interactions+`Avg. minutes new vis.`+`Avg. minutes ret. vis.`+`Visitors`+`Avg. views new vis.`+`Avg. views ret. vis.`, data = test)
-
-
-# backward
-fullMSE <- (summary(fullmodel)$sigma)^2
-step(fullmodel, data = test, scale = fullMSE, direction = "backward")
-
-test<-na.omit(test)
-#stepwise
-nullmodel <- lm(`huff_metric` ~ 1, data = test)
-step(nullmodel, scope = list(upper = fullmodel),
-scale = fullMSE, direction = "both")
-
-#Stepwise gave me this model:
-mod_huff <- lm(formula = huff_metric ~ `Social interactions` + `Avg. minutes ret. vis.` + 
-    `Returning vis.` + `Engaged minutes` + `New vis.` + `Social refs` + 
-    Views + `Avg. views new vis.`, data = test)
-
-summary(mod_huff)
-
-plot(mod_huff)
-
-  #cor matrix for the model
-selected_data_mod_step <- test %>%
-  select(`Social interactions`, `Avg. minutes ret. vis.`, 
-    `Returning vis.`, `Engaged minutes`, `New vis.`, `Social refs`, 
-    Views, `Avg. views new vis.`)
-
-  #Nothing abnormally high except (engaged min and returning visitors), (new vis and views), (Social refs and views)
-res2 <- rcorr(as.matrix(selected_data_mod_step))
-res2
-
-  #checking VIF
-library(car)
-vif(mod_huff)
-#There are big issues of multicollinearity in this model
-
-##How about best subset approach?
-library(leaps)
-
-allsubset<-regsubsets(`huff_metric`~`Views`+`Engaged minutes`+`Returning vis.`+`New vis.`+`Social refs`+`Social interactions`+`Avg. minutes new vis.`+`Avg. minutes ret. vis.`+`Visitors`+`Avg. views new vis.`+`Avg. views ret. vis.`, data = test)
-options(digits=3)
-
-summary(allsubset)$adjr2
-plot(allsubset,scale="adjr2")
-
-summary(allsubset)$cp
-plot(allsubset,scale="Cp")
-
-#Using log variables
-allsubset_log<-regsubsets(log_huff_metric~`Views`+`Engaged minutes`+`Returning vis.`+`New vis.`+`Social refs`+`Social interactions`+`Avg. minutes new vis.`+`Avg. minutes ret. vis.`+`Visitors`+`Avg. views new vis.`+`Avg. views ret. vis.`, data = test)
-options(digits=3)
-
-summary(allsubset_log)$adjr2
-plot(allsubset_log,scale="adjr2")
-
-summary(allsubset_log)$cp
-plot(allsubset_log,scale="Cp")
-
-#Gives us THIS model:
-mod_all <- lm(`huff_metric`~`Views`+`Engaged minutes`+`Returning vis.`+`New vis.`+`Social interactions`+`Social refs`+`Avg. minutes ret. vis.`, data = test)
-
-summary(mod_all)
-
-#Log
-mod_all_log <- lm(log_huff_metric~`Views`+`Returning vis.`+`New vis.`+`Social refs`+`Social interactions`+`Avg. minutes ret. vis.`+ `Avg. minutes new vis.`+Visitors, data = test)
-
-summary(mod_all_log)
-
-car::vif(mod_all_log)
-
-plot(mod_all_log)
-
-  #Checking for multicollinearity again
-selected_data_mod_best <- test %>%
-  select(`Views`,`Engaged minutes`,`Returning vis.`,`New vis.`,`Social refs`,`Social interactions`,`Avg. minutes ret. vis.`)
-
-library(Hmisc)
-res2 <- rcorr(as.matrix(selected_data_mod_best))
-res2
-
-car::vif(mod_all)
-
-plot(mod_all)
-  #Way better with multicollinearity!
-
-#checking section
-mod_all_sec1 <- lm(`huff_metric`~`Views`+`Engaged minutes`+`Returning vis.`+`New vis.`+`Social refs`+`Social interactions`+`Avg. minutes ret. vis.`+ `Avg. views new vis.`+Section, data = test)
-
-summary(mod_all_sec1)
-
-test_comb_section <- test %>%
-  mutate(black_voices = ifelse(Section == "Black Voices", "yes", "no"))
-#what happens when I add that to the model?
-mod_all_sec <- lm(`huff_metric`~`Views`+`Engaged minutes`+`Returning vis.`+`New vis.`+`Social refs`+`Social interactions`+`Avg. minutes ret. vis.`+ `Avg. views new vis.`+black_voices, data = test_comb_section)
-
-#This should be something we consider. Do sections fit into theoretical definition of social impact?
 ```
 
 
