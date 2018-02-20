@@ -111,8 +111,156 @@ Eng_sort <-data_10000%>%
 # Erina
 
 ```{r}
+# data_1000_EF<- read_csv("Raw data_10000 articles_Jul-Dec 2017.csv")
+# names(data_1000_EF)
+# lm1 <- lm(log(`Engaged minutes`)~.-URL-Title-Authors-Tags,data=data_1000_EF)
+# summary(lm1)
+# anova(lm1)
+# 
+# plot(lm1)
+# summary(data_1000_EF)
 
+library(readr)
+library(tidytext)
+library(dplyr)
+library(stringr)
+
+data_EF <- read_csv("Raw data_10000 articles_Jul-Dec 2017.csv") #import original data
+
+data("stop_words") #import stop words
+text <- read_csv("text-data.csv") %>%
+  select(URL, article) #import textual data
+
+text$article<- str_replace_all(text$article, "[[:punct:]]", "") #omit special characters
+afinn <- get_sentiments("afinn")
+
+afinn_neg5 <- get_sentiments("afinn") %>%
+    filter(score == -5)
+afinn_neg4 <- get_sentiments("afinn") %>%
+    filter(score == -4)
+afinn_neg3 <- get_sentiments("afinn") %>%
+    filter(score == -3)
+afinn_neg2 <- get_sentiments("afinn") %>%
+    filter(score == -2)
+afinn_neg1 <- get_sentiments("afinn") %>%
+    filter(score == -1)
+afinn_0 <- get_sentiments("afinn") %>%
+    filter(score == 0)
+afinn_pos1 <- get_sentiments("afinn") %>%
+    filter(score == 1)
+afinn_pos2 <- get_sentiments("afinn") %>%
+    filter(score == 2)
+afinn_pos3 <- get_sentiments("afinn") %>%
+    filter(score == 3)
+afinn_pos4 <- get_sentiments("afinn") %>%
+    filter(score == 4)
+afinn_pos5 <- get_sentiments("afinn") %>%
+    filter(score == 5)
+
+
+words <- text %>%
+#  group_by(URL) %>%
+  unnest_tokens(word, article)
+
+words <- words %>%
+  anti_join(stop_words)
+
+neg5 <- words %>%
+  group_by(URL) %>%
+	inner_join(afinn_neg5) %>%
+	count(word, sort=TRUE)
+
+neg4 <- words %>%
+  group_by(URL) %>%
+	inner_join(afinn_neg4) %>%
+	count(word, sort=TRUE)
+
+neg3 <- words %>%
+  group_by(URL) %>%
+	inner_join(afinn_neg3) %>%
+	count(word, sort=TRUE)
+
+neg2 <- words %>%
+  group_by(URL) %>%
+	inner_join(afinn_neg2) %>%
+	count(word, sort=TRUE)
+
+neg1 <- words %>%
+  group_by(URL) %>%
+	inner_join(afinn_neg1) %>%
+	count(word, sort=TRUE)
+
+zero <- words %>%
+  group_by(URL) %>%
+	inner_join(afinn_0) %>%
+	count(word, sort=TRUE)
+
+pos1 <- words %>%
+  group_by(URL) %>%
+	inner_join(afinn_pos1) %>%
+	count(word, sort=TRUE)
+
+pos2 <- words %>%
+  group_by(URL) %>%
+	inner_join(afinn_pos2) %>%
+	count(word, sort=TRUE)
+
+pos3 <- words %>%
+  group_by(URL) %>%
+	inner_join(afinn_pos3) %>%
+	count(word, sort=TRUE)
+
+pos4 <- words %>%
+  group_by(URL) %>%
+	inner_join(afinn_pos4) %>%
+	count(word, sort=TRUE)
+
+pos5 <- words %>%
+  group_by(URL) %>%
+	inner_join(afinn_pos5) %>%
+	count(word, sort=TRUE)
+
+###at "2.2 Sentiment analysis with inner join"
 ```
+
+```{r}
+#####Erina continued
+
+
+
+words %>%
+	group_by(URL) %>%
+	inner_join() %>%
+	count(word, sort=TRUE)
+
+words %>%
+	group_by(URL) %>%
+	inner_join(afinn_neg5) %>%
+	count(word, sort=TRUE)
+
+words <- words %>%
+  group_by(URL) %>%
+  mutate(proportion = n / sum(n))
+
+words <- words%>%
+  count(word, sort = TRUE) %>%
+  #select(-n) %>% 
+  spread(URL, proportion) %>% 
+  gather(URL, proportion, 2:3)
+
+
+
+#words %>%
+ # group_by(article) %>%
+  #count(word, sort = TRUE) 
+
+#write.csv(text, file = "C:/Users/choco/Desktop/SPRING 2018/Capstone/text_cleanedinR.csv") #create new csv file
+```
+
+Social impact:change in way of thinking/attitude or brings someone to take action or change the way they act; leaves an impression or makes the reader think even if it doesn’t change his or her views
+Quality Journalism:accurate, clear, multiple sources, relevance, change in way of thinking/attitude/action (includes above)
+_Social impact can be a smaller part of quality journalism but not vice versa?_
+https://www.huffingtonpost.com/2012/04/16/huffington-post-pulitzer-prize-2012_n_1429169.html
 
 
 # Julianna 
