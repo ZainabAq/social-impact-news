@@ -301,6 +301,11 @@ sentiment <- sentiment %>%
   mutate(pos5=pos5/total_n)
 
 data_added_sentiment <- full_join(data_EF,sentiment,by="URL")
+
+data_added_sentiment <- data_added_sentiment %>%
+  select(-total_n)
+
+write.csv(data_added_sentiment, file = "C:/Users/choco/Desktop/SPRING 2018/Capstone/data_added_sentiment.csv")
 ```
 
 
