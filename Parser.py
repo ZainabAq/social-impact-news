@@ -1,6 +1,7 @@
 # To run:
 # python3 Parser.py [name of .csv file]
-from bs4 import BeautifulSoup, element
+
+from bs4 import BeautifulSoup
 import requests
 import sys
 import csv
@@ -30,8 +31,8 @@ def cleanText(tag):
         return codeList;
 
 def main():
-    # csv_file1 = open(sys.argv[1], 'r', encoding="utf-16")
-    csv_file2 = open('text-data-politics.csv', 'w', encoding="utf8")
+    csv_file1 = open(sys.argv[1], 'r')
+    csv_file2 = open('text-data.csv', 'w', encoding="utf8")
     writer = csv.writer(csv_file2, delimiter=',')
     reader = csv.reader(csv_file1)
     for row in reader:
@@ -46,6 +47,7 @@ def main():
             chunk = cleanText(chunk);
             fullText+=(chunk);
         writer.writerow([url]+[fullText])
+<<<<<<< HEAD
 
     # reader = csv.reader(csv_file1)
     with open(sys.argv[1], 'r',  encoding="utf8", errors='ignore') as csv_file1:
@@ -66,6 +68,8 @@ def main():
                     pass
             writer.writerow([url]+[fullText])
 
+=======
+>>>>>>> b00c423e4078eb613e9e5edf212efc8295b4ddf0
     csv_file1.close()
     csv_file2.close()
 
