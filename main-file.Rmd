@@ -20,6 +20,16 @@ data_10000 <- read_csv("Raw data_10000 articles_Jul-Dec 2017.csv")
 # Minji
 
 ```{r}
+library(dplyr)
+library(mosaic)
+library(randomForest)
+library(ParetoPosStable)
+library(tree)
+library(gbm)
+library(adabag)
+library(EnvStats)
+library(caret)
+
 ##removing na's and creating the existing metric
 Sint_PV <- data_10000%>%
   mutate(metric = `Social interactions`/Views)%>%
@@ -31,19 +41,13 @@ Sint_PV <- data_10000%>%
 engaged_min <- Sint_PV$`Engaged minutes`
 metric <-Sint_PV$metric
 soc_int <- Sint_PV$`Social interactions`
-pv <- Sint_PV$`Views`
+pv <-as.data.frame(Sint_PV$`Views`) 
+V <-Sint_PV$`Views`
 rv <- Sint_PV$`Returning vis.`
 
-##looking at the correlations
-cor(engaged_min, soc_int)
-cor(engaged_min, metric)
-cor(engaged_min, pv)
-cor(engaged_min, rv)
-cor(rv, metric)
 
 ##Pareto Distribution
-library(ParetoPosStable)
-pareto.fit(pv, estim.method = "MLE")
+pareto.fit(V, estim.method = "MLE")
 
 ggplot(pv, aes(log(V))) + geom_histogram(aes(y=..density..), bins = 100 ) + stat_function(fun = dnorm, args = list(11.68749, 1.013802), color = "red")
 
@@ -52,20 +56,271 @@ p+ stat_function(fun = dpareto, args = list(7795, 0.4751), color = "red")
 
 ###################################################################################################
 
-
 merged_200 <- read_csv("merged_200.csv")
 minji_50 <- merged_200[101:150,]
 write.table(minji_50, file="minji_50.csv",sep=",",row.names=F)
 minji_50_impact <- read_csv("minji_50_impact.csv")
+rated_200 <- read_csv("rated_200.csv")
+tally(~Section, data_10000)
+politics <- data_10000 %>%
+  filter(Section == "Politics")
+write.table(politics, file="politics.csv", sep =",", row.names=F)
+###################################################################################################
 
+rated_200 <- rated_200 %>%
+  mutate(Impact1 = ifelse(Impact == 9, 1, ifelse(Impact == 1, 1, 0)))%>%
+  select(-Impact)
+
+
+##Cleaning Data before Modeling 
+spaceless <- function(x) {colnames(x) <- gsub(" ", "_", colnames(x));x}
+hless <- function(x) {colnames(x) <- gsub("-", "_", colnames(x));x}
+clean_200 <- spaceless(rated_200)
+clean_200 <- hless(clean_200)
+clean_200 <- na.omit(clean_200)
+
+##Classification Tree of the whole dataset
+tree <- tree(as.factor(Impact1) ~. -Tags -`Sort_(Views)` -text -keywords -summary -URL -Title -Authors -Section -Publish_date -X1 , clean_200 )
+head(clean_200)
+summary(tree)
+plot(tree)
+text(tree, pretty=0)
+
+#Dividing the data into testing and training
+set.seed(5)
+clean_train <- clean_200 %>%
+  sample_frac(0.5)
+
+clean_test <- clean_200%>%
+  setdiff(clean_train)
+
+##Random Forest model 
+set.seed(5)
+m0 <- randomForest(as.factor(Impact1) ~. -Tags -`Sort_(Views)` -text -keywords -summary -URL -Title -Authors -Section -Publish_date -X1, data=clean_train, importance = TRUE, ntree=2000, mtry=5)
+varImpPlot(m0)
+
+m0_estimates = predict(m0, newdata = clean_test, n.trees = 2000) 
+
+table(m0_estimates, clean_test$Impact1)
+
+(17+23)/64 ##60.9% correct predictions.
+
+
+##Random Forest model with Conditional inference (uses statistical test rather than purity)
+set.seed(5)
+m1 <- randomForest(as.factor(Impact1) ~. -Tags -`Sort_(Views)` -text -keywords -summary -URL -Title -Authors -Section -Publish_date -X1, data=clean_train, controls=cforest_unbiased(ntree=2000, mtry=5))
+varImpPlot(m1)
+
+m1_estimates = predict(m1, newdata = clean_test, OOB=TRUE, type = "response") 
+table(m1_estimates, clean_test$Impact1)
+(15+22)/64 ##62.5 correct predictions
+
+##Classication tree
+set.seed(5)
+m2 <- tree(as.factor(Impact1) ~ . -Tags -`Sort_(Views)` -text -keywords -summary -URL -Title -Authors -Section -Publish_date -X1, data=clean_train)
+summary(m2)
+plot(m2)
+text(m2, pretty = 0)
+m2_estimates = predict(m2, clean_test, type = "class")
+table(m2_estimates, clean_test$Impact1)
+(22+19)/64 ##64.1% correct predictions 
+
+##Pruned tree with CV 
+set.seed(5)
+m3 <- cv.tree(m2, FUN = prune.misclass)
+plot(m3$size, m3$dev, type = "b")
+m4 <- prune.misclass(m2, best = 5)
+plot(m4)
+text(m4, pretty = 0)
+m4_estimates = predict(m4, clean_test, type = "class")
+table(m4_estimates, clean_test$Impact1)
+(22+21)/64 ##67.2% correct predictions
+
+##Boosting with Classification 
+clean_boost <- clean_200 %>%
+  select( -Tags, -`Sort_(Views)`, -text, -keywords, -summary, -URL, -Title, -Authors, -Section, -Publish_date, -X1)
+
+m5<- gbm(Impact1 ~., data = clean_boost, distribution = "bernoulli", n.trees = 500, cv.folds = 5, verbose = F)
+best.iter = gbm.perf(m5, method = "cv")
+
+clean_boost2 <- clean_boost %>%
+  mutate(Impact = ifelse(Impact1 == 1, "Y", "N" )) %>%
+  select(-Impact1)
+
+set.seed(5)
+fitControl = trainControl(method="cv", summaryFunction =  twoClassSummary, classProbs = TRUE, number = 5, returnResamp = "all")
+m6 <- train(Impact~., data=clean_boost2, method="gbm", trControl=fitControl, tuneGrid=data.frame(.n.trees=best.iter, .shrinkage=0.01, .interaction.depth=1, .n.minobsinnode=1), verbose=FALSE,  metric = "ROC", distribution = "bernoulli")
+m6
+confusionMatrix(m6)
+m6_estimates = predict(m6, clean_boost2)
+postResample(m6_estimates, as.factor(clean_boost2$Impact))
 ```
 
 
 # Erina
 
 ```{r}
+# data_1000_EF<- read_csv("Raw data_10000 articles_Jul-Dec 2017.csv")
+# names(data_1000_EF)
+# lm1 <- lm(log(`Engaged minutes`)~.-URL-Title-Authors-Tags,data=data_1000_EF)
+# summary(lm1)
+# anova(lm1)
+# 
+# plot(lm1)
+# summary(data_1000_EF)
 
+library(readr)
+library(tidytext)
+library(dplyr)
+library(stringr)
+
+data_EF <- read_csv("Raw data_10000 articles_Jul-Dec 2017.csv") #import original data
+
+data("stop_words") #import stop words
+text <- read_csv("text-data.csv") %>%
+  select(URL, article) #import textual data
+
+text$article<- str_replace_all(text$article, "[[:punct:]]", "") #omit special characters
+afinn <- get_sentiments("afinn")
+
+afinn_neg5 <- get_sentiments("afinn") %>%
+    filter(score == -5)
+afinn_neg4 <- get_sentiments("afinn") %>%
+    filter(score == -4)
+afinn_neg3 <- get_sentiments("afinn") %>%
+    filter(score == -3)
+afinn_neg2 <- get_sentiments("afinn") %>%
+    filter(score == -2)
+afinn_neg1 <- get_sentiments("afinn") %>%
+    filter(score == -1)
+afinn_0 <- get_sentiments("afinn") %>%
+    filter(score == 0)
+afinn_pos1 <- get_sentiments("afinn") %>%
+    filter(score == 1)
+afinn_pos2 <- get_sentiments("afinn") %>%
+    filter(score == 2)
+afinn_pos3 <- get_sentiments("afinn") %>%
+    filter(score == 3)
+afinn_pos4 <- get_sentiments("afinn") %>%
+    filter(score == 4)
+afinn_pos5 <- get_sentiments("afinn") %>%
+    filter(score == 5)
+
+
+words <- text %>%
+#  group_by(URL) %>%
+  unnest_tokens(word, article)
+
+words <- words %>%
+  anti_join(stop_words)
+
+neg5 <- words %>%
+  group_by(URL) %>%
+	inner_join(afinn_neg5) %>%
+	count(word, sort=TRUE)
+
+neg4 <- words %>%
+  group_by(URL) %>%
+	inner_join(afinn_neg4) %>%
+	count(word, sort=TRUE)
+
+neg3 <- words %>%
+  group_by(URL) %>%
+	inner_join(afinn_neg3) %>%
+	count(word, sort=TRUE)
+
+neg2 <- words %>%
+  group_by(URL) %>%
+	inner_join(afinn_neg2) %>%
+	count(word, sort=TRUE)
+
+neg1 <- words %>%
+  group_by(URL) %>%
+	inner_join(afinn_neg1) %>%
+	count(word, sort=TRUE)
+
+zero <- words %>%
+  group_by(URL) %>%
+	inner_join(afinn_0) %>%
+	count(word, sort=TRUE)
+
+pos1 <- words %>%
+  group_by(URL) %>%
+	inner_join(afinn_pos1) %>%
+	count(word, sort=TRUE)
+
+pos2 <- words %>%
+  group_by(URL) %>%
+	inner_join(afinn_pos2) %>%
+	count(word, sort=TRUE)
+
+pos3 <- words %>%
+  group_by(URL) %>%
+	inner_join(afinn_pos3) %>%
+	count(word, sort=TRUE)
+
+pos4 <- words %>%
+  group_by(URL) %>%
+	inner_join(afinn_pos4) %>%
+	count(word, sort=TRUE)
+
+pos5 <- words %>%
+  group_by(URL) %>%
+	inner_join(afinn_pos5) %>%
+	count(word, sort=TRUE)
+
+###at "2.2 Sentiment analysis with inner join"
 ```
+
+
+```{r}
+#####Erina continued
+
+
+
+words %>%
+	group_by(URL) %>%
+	inner_join() %>%
+	count(word, sort=TRUE)
+
+words %>%
+	group_by(URL) %>%
+	inner_join(afinn_neg5) %>%
+	count(word, sort=TRUE)
+
+words <- words %>%
+  group_by(URL) %>%
+  mutate(proportion = n / sum(n))
+
+words <- words%>%
+  count(word, sort = TRUE) %>%
+  #select(-n) %>% 
+  spread(URL, proportion) %>% 
+  gather(URL, proportion, 2:3)
+
+
+
+#words %>%
+ # group_by(article) %>%
+  #count(word, sort = TRUE) 
+ggplot2::ggplot(data = test, aes(`huff_metric`)) + geom_histogram()
+
+ggplot(test, aes(`huff_metric`)) + 
+    geom_histogram(aes(y=..density..),fill="gray40") +
+    geom_density(alpha=.2, color = "red")
+
+ggplot(data = test, aes(log(`huff_metric`))) + geom_histogram()
+
+ggplot(test, aes(log(`huff_metric`))) + 
+    geom_histogram(aes(y=..density..),fill="gray40") +
+    geom_density(alpha=.2, color = "red")
+  #testing normality
+qqnorm(test$log_huff_metric)
+qqline(test$log_huff_metric, col = "red")
+
+#write.csv(text, file = "C:/Users/choco/Desktop/SPRING 2018/Capstone/text_cleanedinR.csv") #create new csv file
+```
+
 
 
 # Julianna 
@@ -108,6 +363,124 @@ qqline(test$Views, col = "red")
 
 qqnorm(test$log_views)
 qqline(test$log_views, col = "red")
+
+##MODELS--------------------------------------------------
+
+#Finding predictors from backward and stepwise regression
+fullmodel <- lm(`huff_metric`~`Views`+`Engaged minutes`+`Returning vis.`+`New vis.`+`Social refs`+`Social interactions`+`Avg. minutes new vis.`+`Avg. minutes ret. vis.`+`Visitors`+`Avg. views new vis.`+`Avg. views ret. vis.`, data = test)
+
+#Using log variables
+fullmodel <- lm(log_huff_metric~`Views`+log_engaged_minutes+`Returning vis.`+`New vis.`+`Social refs`+log_social_interactions+`Avg. minutes new vis.`+`Avg. minutes ret. vis.`+`Visitors`+`Avg. views new vis.`+`Avg. views ret. vis.`, data = test)
+
+
+# backward
+fullMSE <- (summary(fullmodel)$sigma)^2
+step(fullmodel, data = test, scale = fullMSE, direction = "backward")
+
+test<-na.omit(test)
+#stepwise
+nullmodel <- lm(`huff_metric` ~ 1, data = test)
+step(nullmodel, scope = list(upper = fullmodel),
+scale = fullMSE, direction = "both")
+
+#Stepwise gave me this model:
+mod_huff <- lm(formula = huff_metric ~ `Social interactions` + `Avg. minutes ret. vis.` + 
+    `Returning vis.` + `Engaged minutes` + `New vis.` + `Social refs` + 
+    Views + `Avg. views new vis.`, data = test)
+
+summary(mod_huff)
+
+plot(mod_huff)
+
+  #cor matrix for the model
+selected_data_mod_step <- test %>%
+  select(`Social interactions`, `Avg. minutes ret. vis.`, 
+    `Returning vis.`, `Engaged minutes`, `New vis.`, `Social refs`, 
+    Views, `Avg. views new vis.`)
+
+  #Nothing abnormally high except (engaged min and returning visitors), (new vis and views), (Social refs and views)
+res2 <- rcorr(as.matrix(selected_data_mod_step))
+res2
+
+  #checking VIF
+library(car)
+vif(mod_huff)
+#There are big issues of multicollinearity in this model
+
+##How about best subset approach?
+library(leaps)
+
+allsubset<-regsubsets(`huff_metric`~`Views`+`Engaged minutes`+`Returning vis.`+`New vis.`+`Social refs`+`Social interactions`+`Avg. minutes new vis.`+`Avg. minutes ret. vis.`+`Visitors`+`Avg. views new vis.`+`Avg. views ret. vis.`, data = test)
+options(digits=3)
+
+summary(allsubset)$adjr2
+plot(allsubset,scale="adjr2")
+
+summary(allsubset)$cp
+plot(allsubset,scale="Cp")
+
+#Using log variables
+allsubset_log<-regsubsets(log_huff_metric~`Views`+`Engaged minutes`+`Returning vis.`+`New vis.`+`Social refs`+`Social interactions`+`Avg. minutes new vis.`+`Avg. minutes ret. vis.`+`Visitors`+`Avg. views new vis.`+`Avg. views ret. vis.`, data = test)
+options(digits=3)
+
+summary(allsubset_log)$adjr2
+plot(allsubset_log,scale="adjr2")
+
+summary(allsubset_log)$cp
+plot(allsubset_log,scale="Cp")
+
+#Gives us THIS model:
+mod_all <- lm(`huff_metric`~`Views`+`Engaged minutes`+`Returning vis.`+`New vis.`+`Social interactions`+`Social refs`+`Avg. minutes ret. vis.`, data = test)
+
+summary(mod_all)
+
+#Log
+mod_all_log <- lm(log_huff_metric~`Views`+`Returning vis.`+`New vis.`+`Social refs`+`Social interactions`+`Avg. minutes ret. vis.`+ `Avg. minutes new vis.`+Visitors, data = test)
+
+summary(mod_all_log)
+
+car::vif(mod_all_log)
+
+plot(mod_all_log)
+
+  #Checking for multicollinearity again
+selected_data_mod_best <- test %>%
+  select(`Views`,`Engaged minutes`,`Returning vis.`,`New vis.`,`Social refs`,`Social interactions`,`Avg. minutes ret. vis.`)
+
+library(Hmisc)
+res2 <- rcorr(as.matrix(selected_data_mod_best))
+res2
+
+car::vif(mod_all)
+
+plot(mod_all)
+  #Way better with multicollinearity!
+
+#checking section
+mod_all_sec1 <- lm(`huff_metric`~`Views`+`Engaged minutes`+`Returning vis.`+`New vis.`+`Social refs`+`Social interactions`+`Avg. minutes ret. vis.`+ `Avg. views new vis.`+Section, data = test)
+
+summary(mod_all_sec1)
+
+test_comb_section <- test %>%
+  mutate(black_voices = ifelse(Section == "Black Voices", "yes", "no"))
+#what happens when I add that to the model?
+mod_all_sec <- lm(`huff_metric`~`Views`+`Engaged minutes`+`Returning vis.`+`New vis.`+`Social refs`+`Social interactions`+`Avg. minutes ret. vis.`+ `Avg. views new vis.`+black_voices, data = test_comb_section)
+
+#This should be something we consider. Do sections fit into theoretical definition of social impact?
+
+##how about engaged minutes per viewer?
+test <- test %>%
+  mutate(engaged_min_per_view = `Engaged minutes`/Views, engaged_min_per_ret_vis = `Engaged minutes`/`Returning vis.`)%>%
+  arrange(desc(engaged_min_per_ret_vis))
+
+mosaic::favstats(test$engaged_min_per_view)
+
+ggplot(test, aes(engaged_min_per_view)) + geom_histogram()
+
+mosaic::favstats(test$engaged_min_per_ret_vis)
+
+ggplot(test, aes(log(engaged_min_per_ret_vis))) + geom_histogram()
+
 ```
 
 
