@@ -47,6 +47,29 @@ def main():
             chunk = cleanText(chunk);
             fullText+=(chunk);
         writer.writerow([url]+[fullText])
+<<<<<<< HEAD
+
+    # reader = csv.reader(csv_file1)
+    with open(sys.argv[1], 'r',  encoding="utf8", errors='ignore') as csv_file1:
+        reader = csv.reader(csv_file1)
+        for row in reader:
+            url = str(row[0])
+            print(url)
+            fullText = ""
+            headers = {'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36'}
+            html = requests.get(url, headers=headers)
+            html = html.content.decode('utf-8', 'ignore')
+            soup = BeautifulSoup(html, 'html.parser')
+            for chunk in soup.findAll("div", {"class":"content-list-component bn-content-list-text yr-content-list-text text"}):
+                try:
+                    chunk = cleanText(chunk);
+                    fullText+=(chunk);
+                except element.NavigableString:
+                    pass
+            writer.writerow([url]+[fullText])
+
+=======
+>>>>>>> b00c423e4078eb613e9e5edf212efc8295b4ddf0
     csv_file1.close()
     csv_file2.close()
 

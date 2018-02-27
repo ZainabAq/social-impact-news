@@ -51,7 +51,7 @@ def main():
     # print(ldamodel.print_topics(num_topics=8, num_words=3))
     # Assigns the topics to the documents in corpus
     # ****Uncomment from here******`
-
+    
     lda_corpus = ldamodel[corpus]
     # Find the threshold, let's set the threshold to be 1/#clusters,
     # To prove that the threshold is sane, we average the sum of all probabilities:
