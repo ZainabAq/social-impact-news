@@ -265,6 +265,14 @@ afinn_pos4 <- get_sentiments("afinn") %>%
 afinn_pos5 <- get_sentiments("afinn") %>%
     filter(score == 5)
 
+filter_sentiments <- function(x, ...) {
+  get_sentiments("afinn") %>%
+    filter(score == x)
+}
+
+output <- lapply(-5:5, filter_sentiments) %>%
+  bind_rows()
+
 
 words <- text %>%
 #  group_by(URL) %>%
@@ -275,7 +283,7 @@ words <- words %>%
 
 neg5 <- words %>%
   group_by(URL) %>%
-	inner_join(afinn_neg5) %>%
+	inner_join(output) %>%
 	count(word, sort=TRUE)
 neg5$score <- "-5"
 
