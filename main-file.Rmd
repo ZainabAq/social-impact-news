@@ -471,6 +471,14 @@ https://www.huffingtonpost.com/2012/04/16/huffington-post-pulitzer-prize-2012_n_
 # Julianna 
 
 ```{r}
+library(dplyr)
+library(mosaic)
+library(Hmisc)
+library(car)
+library(leaps)
+library(tidyr)
+library(data.table)
+
 data_10000 %>%
   arrange(`Engaged minutes`) %>%
   select(Title)
@@ -548,12 +556,10 @@ res2 <- rcorr(as.matrix(selected_data_mod_step))
 res2
 
   #checking VIF
-library(car)
 vif(mod_huff)
 #There are big issues of multicollinearity in this model
 
 ##How about best subset approach?
-library(leaps)
 
 allsubset<-regsubsets(`huff_metric`~`Views`+`Engaged minutes`+`Returning vis.`+`New vis.`+`Social refs`+`Social interactions`+`Avg. minutes new vis.`+`Avg. minutes ret. vis.`+`Visitors`+`Avg. views new vis.`+`Avg. views ret. vis.`, data = test)
 options(digits=3)
@@ -592,7 +598,6 @@ plot(mod_all_log)
 selected_data_mod_best <- test %>%
   select(`Views`,`Engaged minutes`,`Returning vis.`,`New vis.`,`Social refs`,`Social interactions`,`Avg. minutes ret. vis.`)
 
-library(Hmisc)
 res2 <- rcorr(as.matrix(selected_data_mod_best))
 res2
 
@@ -631,10 +636,8 @@ ggplot(test, aes(log(engaged_min_per_ret_vis))) + geom_histogram()
 Turk <- read_csv("Batch_3145287_batch_results.csv")
 ######################################
 
-Turk<-Turk %>%
+Turk_time<-Turk %>%
   filter(WorkTimeInSeconds >= 29)
-
-library(tidyr)
 
 tidyTurk <- Turk %>% 
   mutate(y = ifelse(Answer.categories == "category 1", 0, 1)) %>%
@@ -642,7 +645,6 @@ tidyTurk <- Turk %>%
   summarise(ys = paste(y, collapse = ","))%>%
   separate(ys, into = c("y1", "y2", "y3"))
 
-library(Hmisc)
 corTurk <- tidyTurk %>%
   select(y1, y2, y3)
 
@@ -650,16 +652,22 @@ check <- rcorr(as.matrix(corTurk))
 check
 
 #Majority rules
-Turk2 <- Turk %>% 
+Turk2 <- Turk_time %>% 
   mutate(y = ifelse(Answer.categories == "category 1", 0, 1)) %>%
   select(Input.URL, y)
 
-Turk2 <- data.table::data.table(Turk2)
+Turk2 <- data.table(Turk2)
 
 Turk2 <- Turk2[,as.numeric(names(which.max(table(y)))),by=Input.URL]
 
 Turk2 <- data.frame(Turk2)
 tally(Turk2$V1)
+
+#majority rules-- all 1
+Turk3 <- tidyTurk %>%
+  mutate(all1 = ifelse(y1 == 1 & y2 == 1 & y3 == 1, 1, 0))
+
+tally(Turk3$all1)
 ```
 
 
