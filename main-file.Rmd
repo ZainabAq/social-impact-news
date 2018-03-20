@@ -31,6 +31,7 @@ library(gbm)
 library(adabag)
 library(EnvStats)
 library(caret)
+library(Hmisc)
 
 ##removing na's and creating the existing metric
 Sint_PV <- data_10000%>%
@@ -288,7 +289,11 @@ tidyTurk <- Turk %>%
   summarise(ys = paste(y, collapse = ","))%>%
   separate(ys, into = c("y1", "y2", "y3"))
 
-cor(tidyTurk$y1, tidyTurk$y2, tidyTurk$y3, use = "complete.obs")
+corTurk <- tidyTurk %>%
+  select(y1, y2, y3)
+
+check <- rcorr(as.matrix(corTurk))
+check
 
 ```
 
