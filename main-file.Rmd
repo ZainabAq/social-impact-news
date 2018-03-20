@@ -283,7 +283,7 @@ Turk <- read_csv("Batch_3145287_batch_results.csv")
 Turk30<-Turk %>%
   filter(WorkTimeInSeconds >= 30)
 
-tidyTurk <- Turk %>% 
+tidyTurk <- Turk30 %>% 
   mutate(y = ifelse(Answer.categories == "category 1", 0, 1)) %>%
   group_by(Input.URL) %>%
   summarise(ys = paste(y, collapse = ","))%>%
@@ -294,7 +294,6 @@ corTurk <- tidyTurk %>%
 
 check <- rcorr(as.matrix(corTurk))
 check
-
 ```
 
 
