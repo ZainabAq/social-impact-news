@@ -2,7 +2,7 @@
 title: "main-file"
 output: html_document
 editor_options: 
-  chunk_output_type: console
+  chunk_output_type: inline
 ---
 
 ```{r setup, include=FALSE}
@@ -279,8 +279,16 @@ write.table(politics_url, file="politics-url.csv", sep =",", row.names=F)
 Turk <- read_csv("Batch_3145287_batch_results.csv")
 ######################################
 
-Turk %>%
+Turk30<-Turk %>%
   filter(WorkTimeInSeconds >= 30)
+
+tidyTurk <- Turk %>% 
+  mutate(y = ifelse(Answer.categories == "category 1", 0, 1)) %>%
+  group_by(Input.URL) %>%
+  summarise(ys = paste(y, collapse = ","))%>%
+  separate(ys, into = c("y1", "y2", "y3"))
+
+cor(tidyTurk$y1, tidyTurk$y2, tidyTurk$y3, use = "complete.obs")
 
 ```
 
