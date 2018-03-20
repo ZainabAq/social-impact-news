@@ -23,6 +23,6 @@ turk2$check_both <- ifelse(turk2$check_perc=="1" & turk2$check_sec=="1",1,0)
 
 turk2 <- unique(turk2)
 
-write.csv(turk2, file = "C:/Users/choco/Desktop/SPRING 2018/Capstone/Amazon Turk Users Check.csv")
+
 
 
