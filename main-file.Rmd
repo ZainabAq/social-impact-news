@@ -1,6 +1,8 @@
 ---
 title: "main-file"
 output: html_document
+editor_options: 
+  chunk_output_type: inline
 ---
 
 ```{r setup, include=FALSE}
@@ -29,6 +31,7 @@ library(caret)
 library(gbm)
 library(adabag)
 library(EnvStats)
+library(Hmisc)
 
 ##removing na's and creating the existing metric
 Sint_PV <- data_10000%>%
@@ -169,7 +172,7 @@ postResample(m6_estimates, as.factor(clean_boost2$Impact))
 
 ##Merging Data
 politics_300 <- read_csv("text-stats-politics-300.csv")
-politics <- data_10000 %>%
+politics_ <- data_10000 %>%
   filter(Section == "Politics")
 politics_2 <- politics[1:300,]
 politics_300 <- left_join(politics_300, politics_2, by = "URL")
@@ -186,6 +189,8 @@ hless <- function(x) {colnames(x) <- gsub("-", "_", colnames(x));x}
 politics_300 <- spaceless(politics_300)
 politics_300 <- hless(politics_300)
 names(politics_300)
+#politics_300 <- politics_300 %>%
+  #mutate(metric = Social_interactions/Views)
 
 ##Classification Tree of the whole dataset
 tree_p <- tree(as.factor(impact_score) ~., politics_300)
@@ -236,13 +241,14 @@ table(mp3_estimates, politics_test$impact_score)
 set.seed(5)
 mp4 <- randomForest(as.factor(impact_score) ~. , data=politics_train, controls=cforest_unbiased(ntree=2000, mtry=5))
 varImpPlot(mp4)
-
-mp4_estimates = predict(mp4, newdata = politics_test, OOB=TRUE, type = "response") 
+mp4_estimates = predict(mp4, newdata = politics_test, type = "response") 
 table(mp4_estimates, politics_test$impact_score)
 (61+16)/115 ##67 correct predictions
 
+
+
 ##Boosting with Classification 
-mp5<- gbm(impact_score ~., data = politics_300, distribution = "bernoulli", n.trees = 500, cv.folds = 5, verbose = F)
+mp5<- gbm(impact_score ~., data = politics_300, distribution = "bernoulli", n.trees = 2000, cv.folds = 5, verbose = F)
 best.iter = gbm.perf(mp5, method = "cv")
 
 politics_boost <- politics_300 %>%
@@ -255,12 +261,40 @@ summary(mp7)
 set.seed(5)
 fitControl = trainControl(method="cv", summaryFunction =  twoClassSummary, classProbs = TRUE, number = 5, returnResamp = "all")
 mp6 <- train(Impact~., data=politics_boost, method="gbm", trControl=fitControl, tuneGrid=data.frame(.n.trees=best.iter, .shrinkage=0.01, .interaction.depth=1, .n.minobsinnode=1), verbose=FALSE,  metric = "ROC", distribution = "bernoulli")
-mp6
+varImp(mp6)
+
 confusionMatrix(mp6)
 mp6_estimates = predict(mp6, politics_boost)
 confusionMatrix(mp6_estimates, as.factor(politics_boost$Impact))
 postResample(mp6_estimates, as.factor(politics_boost$Impact))
-##Accuracy 0.823, avg = 0.7
+##Accuracy 0.909, (0.8638, 0.9426)
+
+###############################################################
+politics_url <- data_10000 %>%
+  filter(Section == "Politics") %>% 
+  select(URL) 
+
+politics_url <- politics_url[1:2500,]
+write.table(politics_url, file="politics-url.csv", sep =",", row.names=F)
+
+Turk <- read_csv("Batch_3145287_batch_results.csv")
+######################################
+
+Turk30<-Turk %>%
+  filter(WorkTimeInSeconds >= 30)
+
+tidyTurk <- Turk %>% 
+  mutate(y = ifelse(Answer.categories == "category 1", 0, 1)) %>%
+  group_by(Input.URL) %>%
+  summarise(ys = paste(y, collapse = ","))%>%
+  separate(ys, into = c("y1", "y2", "y3"))
+
+corTurk <- tidyTurk %>%
+  select(y1, y2, y3)
+
+check <- rcorr(as.matrix(corTurk))
+check
+
 ```
 
 
@@ -592,6 +626,40 @@ mosaic::favstats(test$engaged_min_per_ret_vis)
 
 ggplot(test, aes(log(engaged_min_per_ret_vis))) + geom_histogram()
 
+#Amazon Mechanical Turks Analysis
+
+Turk <- read_csv("Batch_3145287_batch_results.csv")
+######################################
+
+Turk<-Turk %>%
+  filter(WorkTimeInSeconds >= 29)
+
+library(tidyr)
+
+tidyTurk <- Turk %>% 
+  mutate(y = ifelse(Answer.categories == "category 1", 0, 1)) %>%
+  group_by(Input.URL) %>%
+  summarise(ys = paste(y, collapse = ","))%>%
+  separate(ys, into = c("y1", "y2", "y3"))
+
+library(Hmisc)
+corTurk <- tidyTurk %>%
+  select(y1, y2, y3)
+
+check <- rcorr(as.matrix(corTurk))
+check
+
+#Majority rules
+Turk2 <- Turk %>% 
+  mutate(y = ifelse(Answer.categories == "category 1", 0, 1)) %>%
+  select(Input.URL, y)
+
+Turk2 <- data.table::data.table(Turk2)
+
+Turk2 <- Turk2[,as.numeric(names(which.max(table(y)))),by=Input.URL]
+
+Turk2 <- data.frame(Turk2)
+tally(Turk2$V1)
 ```
 
 
