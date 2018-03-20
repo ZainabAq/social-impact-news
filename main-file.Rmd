@@ -621,6 +621,25 @@ mosaic::favstats(test$engaged_min_per_ret_vis)
 
 ggplot(test, aes(log(engaged_min_per_ret_vis))) + geom_histogram()
 
+#Amazon Mechanical Turks Analysis
+
+Turk <- read_csv("Batch_3145287_batch_results.csv")
+######################################
+
+Turk30<-Turk %>%
+  filter(WorkTimeInSeconds >= 30)
+
+library(tidyr)
+
+tidyTurk <- Turk %>% 
+  mutate(y = ifelse(Answer.categories == "category 1", 0, 1)) %>%
+  group_by(Input.URL) %>%
+  summarise(ys = paste(y, collapse = ","))%>%
+  separate(ys, into = c("y1", "y2", "y3"))
+
+library(Hmisc)
+res_1 <- rcorr(as.matrix(tidyTurk))
+res_1
 ```
 
 
