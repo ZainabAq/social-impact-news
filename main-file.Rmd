@@ -12,6 +12,8 @@ knitr::opts_chunk$set(echo = TRUE)
 library(readr)
 # change this according to your
 data_10000 <- read_csv("Raw data_10000 articles_Jul-Dec 2017.csv")
+
+response<- read_csv("Batch_3145287_batch_results.csv")
 ```
 
 
@@ -25,10 +27,10 @@ library(mosaic)
 library(randomForest)
 library(ParetoPosStable)
 library(tree)
+library(caret)
 library(gbm)
 library(adabag)
 library(EnvStats)
-library(caret)
 
 ##removing na's and creating the existing metric
 Sint_PV <- data_10000%>%
@@ -649,5 +651,11 @@ data_10000 %>%
   select(c(`Returning vis.`,`Social refs`, `Engaged minutes`, `Avg. views new vis.`, Views, Visitors, `New vis.`))%>%
   cor()
 ```
+
+
+```{bash}
+python3 parser.py data/politics.csv
+```
+
 
 
