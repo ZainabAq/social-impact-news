@@ -27,10 +27,10 @@ library(mosaic)
 library(randomForest)
 library(ParetoPosStable)
 library(tree)
+library(caret)
 library(gbm)
 library(adabag)
 library(EnvStats)
-library(caret)
 library(Hmisc)
 
 ##removing na's and creating the existing metric
@@ -725,5 +725,11 @@ data_10000 %>%
   select(c(`Returning vis.`,`Social refs`, `Engaged minutes`, `Avg. views new vis.`, Views, Visitors, `New vis.`))%>%
   cor()
 ```
+
+
+```{bash}
+python3 parser.py data/politics.csv
+```
+
 
 
