@@ -12,8 +12,6 @@ knitr::opts_chunk$set(echo = TRUE)
 library(readr)
 # change this according to your
 data_10000 <- read_csv("Raw data_10000 articles_Jul-Dec 2017.csv")
-
-response<- read_csv("Batch_3145287_batch_results.csv")
 ```
 
 
