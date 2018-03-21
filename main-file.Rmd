@@ -478,6 +478,7 @@ library(car)
 library(leaps)
 library(tidyr)
 library(data.table)
+library(psych)
 
 data_10000 %>%
   arrange(`Engaged minutes`) %>%
@@ -668,6 +669,15 @@ Turk3 <- tidyTurk %>%
   mutate(all1 = ifelse(y1 == 1 & y2 == 1 & y3 == 1, 1, 0))
 
 tally(Turk3$all1)
+
+#Corr.test?
+tidyTurk$y1 <- as.numeric(tidyTurk$y1)
+tidyTurk$y2 <- as.numeric(tidyTurk$y2)
+
+corr.test(tidyTurk$y1, tidyTurk$y2)
+
+#permuting
+
 ```
 
 
