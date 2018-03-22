@@ -1,0 +1,104 @@
+---
+title: "pre-app"
+author: "Julianna Alvord"
+date: "3/21/2018"
+output: html_document
+---
+
+```{r}
+library(dplyr)
+library(mosaic)
+library(randomForest)
+library(ParetoPosStable)
+library(tree)
+library(gbm)
+library(adabag)
+library(EnvStats)
+library(caret)
+
+#reading in data
+politics_300 <- read.csv("/Users/juliannaalvord/Documents/SDS 410/politics-no-text-merged.csv")
+
+##Cleaning data 
+spaceless <- function(x) {colnames(x) <- gsub(" ", "_", colnames(x));x}
+hless <- function(x) {colnames(x) <- gsub("-", "_", colnames(x));x}
+politics_300 <- spaceless(politics_300)
+politics_300 <- hless(politics_300)
+names(politics_300)
+
+##Classification Tree of the whole dataset
+tree_p <- tree(as.factor(impact.score) ~., politics_300)
+summary(tree_p)
+plot(tree_p)
+text(tree_p, pretty=0)
+
+#Dividing the data into testing and training
+set.seed(5)
+politics_train <- politics_300 %>%
+  sample_frac(0.5)
+
+politics_test <- politics_300%>%
+  setdiff(politics_train)
+
+##Classication tree
+set.seed(5)
+mp0 <- tree(as.factor(impact.score) ~ ., data=politics_train)
+summary(mp0)
+plot_1 <- plot(mp0)
+text(mp0, pretty = 0)
+mp0_estimates = predict(mp0, politics_test, type = "class")
+table(mp0_estimates, politics_test$impact.score)
+(49+27)/115 ##66% correct predictions 
+
+##Pruned tree with CV 
+set.seed(5)
+mp1 <- cv.tree(mp0, FUN = prune.misclass)
+plot(mp1$size, mp1$dev, type = "b")
+mp2 <- prune.misclass(mp0, best = 5)
+plot(mp2)
+text(mp2, pretty = 0)
+mp2_estimates = predict(mp2, politics_test, type = "class")
+table(mp2_estimates, politics_test$impact.score)
+(56+26)/115 ##71.3% correct predictions
+
+
+##Random Forest model 
+set.seed(5)
+mp3 <- randomForest(as.factor(impact.score) ~.,data=politics_train, importance = TRUE, ntree=2000, mtry=5)
+varImpPlot(mp3)
+mp3_estimates = predict(mp3, newdata = politics_test, n.trees = 2000) 
+table(mp3_estimates, politics_test$impact.score)
+(60+15)/115 ##65.2% correct predictions
+
+
+##Random Forest model with Conditional inference (uses statistical test rather than purity)
+set.seed(5)
+mp4 <- randomForest(as.factor(impact.score) ~. , data=politics_train, controls=cforest_unbiased(ntree=2000, mtry=5))
+varImpPlot(mp4)
+
+mp4_estimates = predict(mp4, newdata = politics_test, OOB=TRUE, type = "response") 
+table(mp4_estimates, politics_test$impact.score)
+(61+16)/115 ##67 correct predictions
+
+##Boosting with Classification 
+mp5<- gbm(impact.score ~., data = politics_300, distribution = "bernoulli", n.trees = 500, cv.folds = 5, verbose = F)
+best.iter = gbm.perf(mp5, method = "cv")
+
+politics_boost <- politics_300 %>%
+  mutate(Impact = ifelse(impact.score == 1, "Y", "N" )) %>%
+  select(-impact.score)
+
+mp7 <- gbm(impact.score ~., data = politics_300, distribution = "bernoulli", cv.folds = 5, verbose = F, shrinkage = 0.01, interaction.depth = 1, n.trees = best.iter, n.minobsinnode = 1)
+summary(mp7)
+
+set.seed(5)
+fitControl = trainControl(method="cv", summaryFunction =  twoClassSummary, classProbs = TRUE, number = 5, returnResamp = "all")
+mp6 <- train(Impact~., data=politics_boost, method="gbm", trControl=fitControl, tuneGrid=data.frame(.n.trees=best.iter, .shrinkage=0.01, .interaction.depth=1, .n.minobsinnode=1), verbose=FALSE,  metric = "ROC", distribution = "bernoulli")
+mp6
+confusionMatrix(mp6)
+mp6_estimates = predict(mp6, politics_boost)
+confusionMatrix(mp6_estimates, as.factor(politics_boost$Impact))
+postResample(mp6_estimates, as.factor(politics_boost$Impact))
+##Accuracy 0.823, avg = 0.7
+```
+
