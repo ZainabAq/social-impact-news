@@ -10,4 +10,6 @@ findstats <- function(x){
   formattable::formattable(data)
 }
 
-parser <- system('python Parser.py Batch_3155287_batch_results.csv')
+parser <- function(){system('python helloworld.py')}
+
+csv <- function(){system('python simplecsv.py')}

@@ -41,10 +41,13 @@ server <- function(input, output) {
   output$table1 <- renderTable({
     findstats(input$URL1)
   })
-  output$python1 <- renderText({parser()
-    }
-    )
+  output$python1 <- renderPrint({
+    parser()
+  })
   
+  output$python1 <- renderPrint({
+    csv()
+  })
 }
 
 # Run the app ----
