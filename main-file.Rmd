@@ -72,7 +72,7 @@ write.table(politics, file="politics.csv", sep =",", row.names=F)
 #politics_75 <-read_csv("text-data-politics.csv")
 #politics_75 <- politics_75[151:225,]
 #write.table(politics_75, file="politics_75.csv", sep=",",row.names=F)
-###################################################################################################
+####################################################################################################################
 
 rated_200 <- rated_200 %>%
   mutate(Impact1 = ifelse(Impact == 9, 1, ifelse(Impact == 1, 1, 0)))%>%
@@ -168,7 +168,7 @@ postResample(m6_estimates, as.factor(clean_boost2$Impact))
 ##Accuracy 0.859, avg = 0.74
 
 
-###################################################################################################
+#####################################################################################################################
 
 ##Merging Data
 politics_300 <- read_csv("text-stats-politics-300.csv")
@@ -269,7 +269,7 @@ confusionMatrix(mp6_estimates, as.factor(politics_boost$Impact))
 postResample(mp6_estimates, as.factor(politics_boost$Impact))
 ##Accuracy 0.909, (0.8638, 0.9426)
 
-###############################################################
+#####################################################################################################################
 politics_url <- data_10000 %>%
   filter(Section == "Politics") %>% 
   select(URL) 
@@ -278,30 +278,74 @@ politics_url <- politics_url[1:2500,]
 write.table(politics_url, file="politics-url.csv", sep =",", row.names=F)
 
 Turk <- read_csv("Batch_3145287_batch_results.csv")
-######################################
+####################################################################################################################
 
+##Filtering by work time
 Turk30<-Turk %>%
   filter(WorkTimeInSeconds >= 15)
 
+##Cleaning Turk Data
 tidyTurk <- Turk %>% 
   mutate(y = ifelse(Answer.categories == "category 1", 0, 1)) %>%
   group_by(Input.URL) %>%
   summarise(ys = paste(y, collapse = ","))%>%
   separate(ys, into = c("y1", "y2", "y3"))
 
+
+##Creating dataframe for correlation matrix
 corTurk <- tidyTurk %>%
   mutate(y1n = as.numeric(y1), y2n = as.numeric(y2), y3n = as.numeric(y3)) %>%
   select(y1n, y2n, y3n)
 
-corTurk
+##Correlation matrix 
 check <- cor(as.matrix(corTurk), use = "complete.obs")
 check
 check_rank <- rcorr(as.matrix(corTurk))
 check_rank
 
+##Checking for how many articles distinct workers worned on 
 WorkerCheck <- Turk %>%
   group_by(WorkerId) %>%
   summarise(N = n())
+
+
+##Rearanging Rows of URL 
+Redo_Turk <- Turk[sample(1:nrow(Turk)), ]
+tidy_redo <- Redo_Turk %>% 
+  mutate(y = ifelse(Answer.categories == "category 1", 0, 1)) %>%
+  group_by(Input.URL) %>%
+  summarise(ys = paste(y, collapse = ","))%>%
+  separate(ys, into = c("y1", "y2", "y3"))
+
+##Creating dataframe for correlation matrix
+corRedo_Turk <- tidy_redo %>%
+  mutate(y1n = as.numeric(y1), y2n = as.numeric(y2), y3n = as.numeric(y3)) %>%
+  select(y1n, y2n, y3n)
+
+##Correlation matrix 
+check <- cor(as.matrix(corRedo_Turk), use = "complete.obs")
+check
+check_rank <- rcorr(as.matrix(corRedo_Turk))
+check_rank
+
+##Creating random values for Ys 
+randomTurk <- data.frame(URL = Turk$Input.URL, yR = sample(0:1, length(Turk$Input.URL), replace = TRUE))
+randomTurk <- randomTurk %>% 
+  group_by(URL) %>%
+  summarise(ys = paste(yR, collapse = ","))%>%
+  separate(ys, into = c("y1", "y2", "y3"))
+
+
+##Creating dataframe for correlation matrix
+corRandomTurk <- randomTurk %>%
+  mutate(y1n = as.numeric(y1), y2n = as.numeric(y2), y3n = as.numeric(y3)) %>%
+  select(y1n, y2n, y3n)
+
+##Correlation matrix 
+check2 <- cor(as.matrix(corRandomTurk), use = "complete.obs")
+check2
+check_rank2 <- rcorr(as.matrix(corRandomTurk))
+check_rank2
 ```
 
 
