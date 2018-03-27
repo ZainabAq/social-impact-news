@@ -281,19 +281,27 @@ Turk <- read_csv("Batch_3145287_batch_results.csv")
 ######################################
 
 Turk30<-Turk %>%
-  filter(WorkTimeInSeconds >= 30)
+  filter(WorkTimeInSeconds >= 15)
 
-tidyTurk <- Turk30 %>% 
+tidyTurk <- Turk %>% 
   mutate(y = ifelse(Answer.categories == "category 1", 0, 1)) %>%
   group_by(Input.URL) %>%
   summarise(ys = paste(y, collapse = ","))%>%
   separate(ys, into = c("y1", "y2", "y3"))
 
 corTurk <- tidyTurk %>%
-  select(y1, y2, y3)
+  mutate(y1n = as.numeric(y1), y2n = as.numeric(y2), y3n = as.numeric(y3)) %>%
+  select(y1n, y2n, y3n)
 
-check <- rcorr(as.matrix(corTurk))
+corTurk
+check <- cor(as.matrix(corTurk), use = "complete.obs")
 check
+check_rank <- rcorr(as.matrix(corTurk))
+check_rank
+
+WorkerCheck <- Turk %>%
+  group_by(WorkerId) %>%
+  summarise(N = n())
 ```
 
 
