@@ -631,6 +631,38 @@ target <- test %>%
   filter(WorkerId=="A3QC57KUVJP5EW"|"A6NH7ITRPQ4O1")
 ```
 
+```{r}
+library(readr)
+library(dplyr)
+
+ldata<-read_csv("C:/Users/choco/Desktop/SPRING 2018/Capstone/politics-2500-merged (2).csv")
+
+ldata <- ldata %>%
+  select(-ID, -text, -y1, -y2, -y3, -Title, -Authors, -`Publish date`, -Section, -Tags)
+
+ldata[is.na(ldata)] <-0
+
+log <- glm(all1~., data=ldata, family="binomial")
+
+
+
+wss <- (nrow(ld2)-1)*sum(apply(na.omit(ld2),2,var))
+for (i in 1:6) wss[i] <- sum(kmeans(ld2, 
+                                     centers=i)$withinss)
+plot(1:30, wss, type="b", xlab="Number of Clusters",
+     ylab="Within groups sum of squares")
+
+knn1 <- kmeans(ld2[,], 3)
+
+ld2$cluster <- knn1$cluster
+
+comparison <- ld2 %>%
+  group_by(cluster) %>%
+  summarise_all(funs(mean))
+
+```
+
+
 
 Social impact:change in way of thinking/attitude or brings someone to take action or change the way they act; leaves an impression or makes the reader think even if it doesn’t change his or her views
 Quality Journalism:accurate, clear, multiple sources, relevance, change in way of thinking/attitude/action (includes above)
