@@ -662,6 +662,48 @@ comparison <- ld2 %>%
 
 ```
 
+```{r}
+# Read the Data
+data_EF <- read_csv("Raw data_10000 articles_Jul-Dec 2017.csv") %>% #import original data
+  select(-URL, -Title, -`Publish date`, -Authors, -Section, -Tags)
+
+# Random sampling
+samplesize = 0.60 * nrow(data_EF)
+set.seed(1)
+index = sample( seq_len ( nrow ( data_EF ) ), size = samplesize )
+
+# Create training and test set
+datatrain = data_EF[ index, ]
+datatest = data_EF[ -index, ]
+
+max = apply(data_EF , 2 , max)
+min = apply(data_EF, 2 , min)
+scaled = as.data.frame(scale(data_EF, center = min, scale = max - min))
+
+# creating training and test set
+trainNN = scaled[index , ]
+testNN = scaled[-index , ]
+
+# fit neural network
+set.seed(2)
+NN = neuralnet(`Sort (Views)`~Visitors+Views, trainNN, hidden = 3 , linear.output = T,data=data_EF )
+
+# plot neural network
+plot(NN)
+
+## Prediction using neural network
+
+predict_testNN = compute(NN, testNN[,c(1:5)])
+predict_testNN = (predict_testNN$net.result * (max(data_EF$rating) - min(data_EF$rating))) + min(data_EF$rating)
+
+plot(datatest$rating, predict_testNN, col='blue', pch=16, ylab = "predicted rating NN", xlab = "real rating")
+
+abline(0,1)
+
+# Calculate Root Mean Square Error (RMSE)
+```
+
+
 
 
 Social impact:change in way of thinking/attitude or brings someone to take action or change the way they act; leaves an impression or makes the reader think even if it doesn’t change his or her views
