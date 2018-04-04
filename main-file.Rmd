@@ -314,6 +314,8 @@ library(readr)
 library(tidytext)
 library(dplyr)
 library(stringr)
+library(Amelia)
+library(logistf)
 
 data_EF <- read_csv("Raw data_10000 articles_Jul-Dec 2017.csv") #import original data
 
@@ -322,6 +324,7 @@ text <- read_csv("text-data.csv") %>%
   select(URL, article) #import textual data
 
 text$article<- str_replace_all(text$article, "[[:punct:]]", "") #omit special characters
+
 afinn <- get_sentiments("afinn")
 
 afinn_neg5 <- get_sentiments("afinn") %>%
@@ -703,6 +706,45 @@ abline(0,1)
 # Calculate Root Mean Square Error (RMSE)
 ```
 
+```{r}
+
+text1 <- read_csv("C:/Users/choco/Desktop/SPRING 2018/Capstone/politics-2500-merged (2).csv")
+text1 <- text1 %>%
+  select(URL, text)
+text1$text<- str_replace_all(text1$text, "[[:punct:]]", "") #omit special characters
+
+#text1 <- str_replace_all(text1$text, "<U+06EA>", "'")
+
+write.csv(text1, file = "C:/Users/choco/Desktop/SPRING 2018/Capstone/politics_new_amazon.csv")
+
+```
+
+```{r}
+ldata <- read_csv("C:/Users/choco/Desktop/SPRING 2018/Capstone/log data (politics-2500-merged).csv")
+
+ldata <- ldata %>%
+  select(-ID,-text,-Title, -`Publish date`, -Authors,  -Section, -Tags, -y1, -y2, -y3) %>%
+  filter(I)
+
+missmap(ldata, main = "Missing values vs observed")
+
+ldata <- ldata %>%
+  select(-`Li refs`, -`Pi refs`, -`Li interactions`, -`Pi interactions`)
+
+ldata[is.na(ldata)]<-0
+
+#split into train and test
+
+train <- ldata[1:1250,]
+test <- ldata[1251:2500,]
+
+m1 <- glm(all1~.-URL,family=binomial("logit"), data=train)
+
+#m1 <- logistf(all1 ~.,family=binomial(link='logit'),data=train)
+
+summary(m1)
+
+```
 
 
 
