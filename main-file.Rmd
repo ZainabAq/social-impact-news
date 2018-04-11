@@ -751,9 +751,8 @@ ldata <- ldata %>%
 ldata[is.na(ldata)]<-0
 
 #split into train and test
-
-train <- ldata2[1:600,]
-test <- ldata2[601:905,]
+train <- ldata[1:600,]
+test <- ldata[601:905,]
 
 m1 <- glm(impact~.,family=binomial(link = "logit"), data=train)
 step(m1,direction="both")
@@ -764,20 +763,20 @@ step(m1,
              test="Chisq",
              data=Data)
 
-m2 <- glm(impact~`Direct refs`+`Sort (Views)` + neg1 +neg3 +pos1 +pos2 + `Social interactions` +`smog-index` +`Avg. views ret. vis.` + neg2 + `total-words`,family=binomial(link = "logit"), data=train)
+#m2 <- glm(impact~`Direct refs`+`Sort (Views)` + neg1 +neg3 +pos1 +pos2 + `Social interactions` +`smog-index` +`Avg. views ret. vis.` + neg2 + `total-words`,family=binomial(link = "logit"), data=train)
 
-m3 <- glm(impact~`Sort (Views)` + neg1 +neg3 +pos1 +pos2 + `Social interactions` +`smog-index` +`Avg. views ret. vis.` + neg2 + `total-words`,family=binomial(link = "logit"), data=train)
+#m3 <- glm(impact~`Sort (Views)` + neg1 +neg3 +pos1 +pos2 + `Social interactions` +`smog-index` +`Avg. views ret. vis.` + neg2 + `total-words`,family=binomial(link = "logit"), data=train)
 
-m5 <- glm(impact~ neg1 +neg3 +pos1 +pos2 + `Social interactions` +`smog-index`  + neg2 + `total-words`,family=binomial(link = "logit"), data=train)
+m5 <- glm(impact~ neg1 +neg3 +pos1 +pos2 + Social_interactions +smog_index  + neg2 + total_words,family=binomial(link = "logit"), data=train)
 
 summary(m5)
 anova(m5)
 
 library(pscl)
-pR2(m1)
+pR2(m5)
 
-xyplot(log(fitted.values(m1)/(1-fitted.values(m1)))~impact, data=ldata2, type=c("l"),ylab="log odds")
-xyplot(fitted.values(m1)/(1-fitted.values(m1))~impact, data=ldata2, ylab="odds")
+xyplot(log(fitted.values(m5)/(1-fitted.values(m5)))~impact, data=ldata, type=c("l"),ylab="log odds")
+xyplot(fitted.values(m5)/(1-fitted.values(m5))~impact, data=ldata, ylab="odds")
 
 
 
@@ -789,7 +788,7 @@ misClasificError <- mean(fitted.results != ldata2$impact)
 print(paste('Accuracy',1-misClasificError))
 
 library(ROCR)
-p <- predict(m1, newdata=subset(test,select=c(2,3,4,5,6,7,8)), type="response")
+p <- predict(m5, newdata=subset(test,select=c(2,3,4,5,6,7,8)), type="response")
 pr <- prediction(p, ldata$impact)
 prf <- performance(pr, measure = "tpr", x.measure = "fpr")
 plot(prf)
@@ -797,6 +796,28 @@ plot(prf)
 auc <- performance(pr, measure = "auc")
 auc <- auc@y.values[[1]]
 auc
+
+library(ROCR)
+# Compute AUC for predicting Class with the model
+prob <- predict(m5, newdata=test, type="response")
+pred <- prediction(prob, test$impact)
+perf <- performance(pred, measure = "tpr", x.measure = "fpr")
+plot(perf)
+auc <- performance(pred, measure = "auc")
+auc <- auc@y.values[[1]]
+auc
+
+test$impact<-as.factor(test$impact)
+ldata$impact <- as.factor(ldata$impact)
+
+ctrl <- trainControl(method = "repeatedcv", number = 10, savePredictions = TRUE)
+
+mod_fit <- train(impact~ neg1 +neg3 +pos1 +pos2 + Social_interactions +smog_index  + neg2 + total_words,  data=ldata, method="glm", family="binomial",
+                 trControl = ctrl, tuneLength = 5)
+
+
+pred = predict(mod_fit, newdata=test)
+confusionMatrix(data=pred, test$impact)
 ```
 
 ```{r}
@@ -806,12 +827,45 @@ test <- read_csv("C:/Users/choco/Desktop/SPRING 2018/Capstone/politics-2500-merg
 
 test[is.na(test)]<-0
 
-testm1<-glm(all1~.,family=binomial(link="logit"),data=test)
+#split into train and test
+training <- test[1:1500,]
+testing <- test[1501:2500,]
 
-step(glm(all1~.,family=binomial(link="logit"),data=test), scope=list(upper=m1), direction="both",test="Chisq",data=Data)
+testm1<-glm(all1~.,family=binomial(link="logit"),data=training)
 
-testm2 <- glm(all1~`Avg. views ret. vis.`+neg3+neg4+pos2+pos1+neg1+neg2+`total-sentences`,family=binomial(link = "logit"), data=test)
+step(glm(all1~.,family=binomial(link="logit"),data=test), scope=list(upper=testm1), direction="both",test="Chisq",data=Data)
+
+testm2 <- glm(all1~`Avg. views ret. vis.`+neg3+neg4+pos2+pos1+neg1+neg2+`total-sentences`,family=binomial(link = "logit"), data=testing)
 summary(testm2)
+
+pR2(testm2)
+
+library(MKmisc)
+HLgof.test(fit = fitted(testm2), obs = testing$all1)
+
+library(ResourceSelection)
+hoslem.test(testing$all1, fitted(testm2), g=10)
+
+library(survey)
+regTermTest(testm2, "neg3")
+
+varImp(testm2)
+
+pred = predict(testm2, newdata=testing)
+accuracy <- table(pred, testing[,"all1"])
+sum(diag(accuracy))/sum(accuracy)
+
+library(ROCR)
+# Compute AUC for predicting Class with the model
+prob <- predict(testm2, newdata=testing, type="response")
+pred <- prediction(prob, testing$all1)
+perf <- performance(pred, measure = "tpr", x.measure = "fpr")
+plot(perf)
+auc <- performance(pred, measure = "auc")
+auc <- auc@y.values[[1]]
+auc
+
+
 ```
 
 
