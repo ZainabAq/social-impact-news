@@ -301,6 +301,24 @@ check
 # Erina
 
 ```{r}
+#join manually rated impact scores
+MK <- read_csv("C:/Users/choco/Desktop/SPRING 2018/Capstone/MK_politics_150_v2.csv")
+JA <- read_csv("C:/Users/choco/Desktop/SPRING 2018/Capstone/JA_politics_150_v2.csv")
+ZA <- read_csv("C:/Users/choco/Desktop/SPRING 2018/Capstone/ZA_politics_150_v2.csv")
+EF <- read_csv("C:/Users/choco/Desktop/SPRING 2018/Capstone/EF_politics_150_v2.csv")
+
+rated_200 <- rbind(MK, JA)
+rated_200 <- rbind(rated_200,ZA)
+rated_200 <- rbind(rated_200,EF)
+
+past <- read_csv("C:/Users/choco/Desktop/SPRING 2018/Capstone/past_politics_300.csv")
+
+rated_200 <- rbind(rated_200,past)
+
+write.csv(rated_200, file = "C:/Users/choco/Desktop/SPRING 2018/Capstone/politics_rated_for_s3.csv")
+```
+
+```{r}
 # data_1000_EF<- read_csv("Raw data_10000 articles_Jul-Dec 2017.csv")
 # names(data_1000_EF)
 # lm1 <- lm(log(`Engaged minutes`)~.-URL-Title-Authors-Tags,data=data_1000_EF)
@@ -720,31 +738,82 @@ write.csv(text1, file = "C:/Users/choco/Desktop/SPRING 2018/Capstone/politics_ne
 ```
 
 ```{r}
-ldata <- read_csv("C:/Users/choco/Desktop/SPRING 2018/Capstone/log data (politics-2500-merged).csv")
+#900 data logistic regression
+data <- read_csv("C:/Users/choco/Desktop/SPRING 2018/Capstone/politics-data-for-model.csv")
 
-ldata <- ldata %>%
-  select(-ID,-text,-Title, -`Publish date`, -Authors,  -Section, -Tags, -y1, -y2, -y3) %>%
-  filter(I)
+ldata <- data
 
 missmap(ldata, main = "Missing values vs observed")
 
 ldata <- ldata %>%
-  select(-`Li refs`, -`Pi refs`, -`Li interactions`, -`Pi interactions`)
+  select(-Li_refs,-Pi_refs,Li_interactions,-Pi_interactions)
 
 ldata[is.na(ldata)]<-0
 
 #split into train and test
 
-train <- ldata[1:1250,]
-test <- ldata[1251:2500,]
+train <- ldata2[1:600,]
+test <- ldata2[601:905,]
 
-m1 <- glm(all1~.-URL,family=binomial("logit"), data=train)
+m1 <- glm(impact~.,family=binomial(link = "logit"), data=train)
+step(m1,direction="both")
 
-#m1 <- logistf(all1 ~.,family=binomial(link='logit'),data=train)
+step(m1,
+     scope = list(upper=m1),
+             direction="both",
+             test="Chisq",
+             data=Data)
 
-summary(m1)
+m2 <- glm(impact~`Direct refs`+`Sort (Views)` + neg1 +neg3 +pos1 +pos2 + `Social interactions` +`smog-index` +`Avg. views ret. vis.` + neg2 + `total-words`,family=binomial(link = "logit"), data=train)
 
+m3 <- glm(impact~`Sort (Views)` + neg1 +neg3 +pos1 +pos2 + `Social interactions` +`smog-index` +`Avg. views ret. vis.` + neg2 + `total-words`,family=binomial(link = "logit"), data=train)
+
+m5 <- glm(impact~ neg1 +neg3 +pos1 +pos2 + `Social interactions` +`smog-index`  + neg2 + `total-words`,family=binomial(link = "logit"), data=train)
+
+summary(m5)
+anova(m5)
+
+library(pscl)
+pR2(m1)
+
+xyplot(log(fitted.values(m1)/(1-fitted.values(m1)))~impact, data=ldata2, type=c("l"),ylab="log odds")
+xyplot(fitted.values(m1)/(1-fitted.values(m1))~impact, data=ldata2, ylab="odds")
+
+
+
+
+
+fitted.results <- predict(m1,newdata=subset(train,select=c(2,3,4,5,6,7,8)),type='response')
+fitted.results <- ifelse(fitted.results > 0.5,1,0)
+misClasificError <- mean(fitted.results != ldata2$impact)
+print(paste('Accuracy',1-misClasificError))
+
+library(ROCR)
+p <- predict(m1, newdata=subset(test,select=c(2,3,4,5,6,7,8)), type="response")
+pr <- prediction(p, ldata$impact)
+prf <- performance(pr, measure = "tpr", x.measure = "fpr")
+plot(prf)
+
+auc <- performance(pr, measure = "auc")
+auc <- auc@y.values[[1]]
+auc
 ```
+
+```{r}
+#random data logistic regression
+test <- read_csv("C:/Users/choco/Desktop/SPRING 2018/Capstone/politics-2500-merged (2).csv") %>%
+  select(-ID,-URL,-Title,-text,-y1,-y2,-y3,-Authors,-Section,-Tags,-`Li refs`,-`Pi refs`,-`Li interactions`,-`Pi interactions`,-`Publish date`)
+
+test[is.na(test)]<-0
+
+testm1<-glm(all1~.,family=binomial(link="logit"),data=test)
+
+step(glm(all1~.,family=binomial(link="logit"),data=test), scope=list(upper=m1), direction="both",test="Chisq",data=Data)
+
+testm2 <- glm(all1~`Avg. views ret. vis.`+neg3+neg4+pos2+pos1+neg1+neg2+`total-sentences`,family=binomial(link = "logit"), data=test)
+summary(testm2)
+```
+
 
 
 
