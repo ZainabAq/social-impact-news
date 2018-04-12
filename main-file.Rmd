@@ -817,23 +817,24 @@ mod_fit <- train(impact~ neg1 +neg3 +pos1 +pos2 + Social_interactions +smog_inde
 
 
 pred = predict(mod_fit, newdata=test)
-confusionMatrix(data=pred, test$impact)
+
+cfm1<-confusionMatrix(data=pred, test$impact)
 ```
 
 ```{r}
 #random data logistic regression
-test <- read_csv("C:/Users/choco/Desktop/SPRING 2018/Capstone/politics-2500-merged (2).csv") %>%
+randomdata <- read_csv("C:/Users/choco/Desktop/SPRING 2018/Capstone/politics-2500-merged (2).csv") %>%
   select(-ID,-URL,-Title,-text,-y1,-y2,-y3,-Authors,-Section,-Tags,-`Li refs`,-`Pi refs`,-`Li interactions`,-`Pi interactions`,-`Publish date`)
 
-test[is.na(test)]<-0
+randomdata[is.na(randomdata)]<-0
 
-#split into train and test
-training <- test[1:1500,]
-testing <- test[1501:2500,]
+#split into train and randomdata
+training <- randomdata[1:1500,]
+testing <- randomdata[1501:2500,]
 
 testm1<-glm(all1~.,family=binomial(link="logit"),data=training)
 
-step(glm(all1~.,family=binomial(link="logit"),data=test), scope=list(upper=testm1), direction="both",test="Chisq",data=Data)
+step(glm(all1~.,family=binomial(link="logit"),data=randomdata), scope=list(upper=testm1), direction="both",randomdata="Chisq",data=Data)
 
 testm2 <- glm(all1~`Avg. views ret. vis.`+neg3+neg4+pos2+pos1+neg1+neg2+`total-sentences`,family=binomial(link = "logit"), data=testing)
 summary(testm2)
@@ -841,10 +842,10 @@ summary(testm2)
 pR2(testm2)
 
 library(MKmisc)
-HLgof.test(fit = fitted(testm2), obs = testing$all1)
+HLgof.randomdata(fit = fitted(testm2), obs = testing$all1)
 
 library(ResourceSelection)
-hoslem.test(testing$all1, fitted(testm2), g=10)
+hoslem.randomdata(testing$all1, fitted(testm2), g=10)
 
 library(survey)
 regTermTest(testm2, "neg3")
@@ -864,6 +865,18 @@ plot(perf)
 auc <- performance(pred, measure = "auc")
 auc <- auc@y.values[[1]]
 auc
+
+testing$all1<-as.factor(testing$all1)
+randomdata$all1 <- as.factor(randomdata$all1)
+
+ctrl <- trainControl(method = "repeatedcv", number = 10, savePredictions = TRUE)
+
+mod_fit <- train(all1~`Avg. views ret. vis.`+neg3+neg4+pos2+pos1+neg1+neg2+`total-sentences`,  data=randomdata, method="glm", family="binomial",
+                 trControl = ctrl, tuneLength = 5)
+
+
+pred = predict(mod_fit, newdata=randomdata)
+cfm2<-confusionMatrix(data=pred, randomdata$all1)
 
 
 ```
