@@ -1,40 +1,58 @@
 ---
-title: Title of submission to PLOS journal
+title: Classifying Socially Impactful Articles
 author:
-  - name: Alice Anonymous
-    email: alice@example.com
-    affiliation: Some Institute of Technology
-    corresponding: alice@example.com
-  - name: Bob Security
-    email: bob@example.com
-    affiliation: Another University
+  - name: Julianna Alvord
+    email: jalvord@smith.edu
+    affiliation: Smith College
+  - name: Minji Kang
+    email: mkang@smith.edu
+    affiliation: Smith College
+  - name: Zainab Rizvi
+    email: srizvi@smith.edu
+    affiliation: Smith College
+  - name: Erina Fukuda
+    email: efukuda@smith.edu
+    affiliation: Smith College
 address:
-  - code: Some Institute of Technology
-    address: Department, Street, City, State, Zip
-  - code: Another University
-    address: Department, Street, City, State, Zip
+  - code: Smith College
+    address: Statistical & Data Sciences, 1 Chapin Way Northampton, Massachusetts 01063
+    
 abstract: |
-  Lorem ipsum dolor sit amet, consectetur adipiscing elit. Curabitur eget porta erat. Morbi consectetur est vel gravida pretium. Suspendisse ut dui eu ante cursus gravida non sed sem. Nullam sapien tellus, commodo id velit id, eleifend volutpat quam. Phasellus mauris velit, dapibus finibus elementum vel, pulvinar non tellus. Nunc pellentesque pretium diam, quis maximus dolor faucibus id. Nunc convallis sodales ante, ut ullamcorper est egestas vitae. Nam sit amet enim ultrices, ultrices elit pulvinar, volutpat risus.
+  abstract goes here
   
 author_summary: |
-  Lorem ipsum dolor sit amet, consectetur adipiscing elit. Curabitur eget porta erat. Morbi consectetur est vel gravida pretium. Suspendisse ut dui eu ante cursus gravida non sed sem. Nullam sapien tellus, commodo id velit id, eleifend volutpat quam. Phasellus mauris velit, dapibus finibus elementum vel, pulvinar non tellus. Nunc pellentesque pretium diam, quis maximus dolor faucibus id. Nunc convallis sodales ante, ut ullamcorper est egestas vitae. Nam sit amet enim ultrices, ultrices elit pulvinar, volutpat risus.
+  author summary goes here
 
 bibliography: mybibfile.bib
 output: rticles::plos_article
 csl: plos.csl
 ---
 
-_Text based on plos sample manuscript, see [http://journals.plos.org/ploscompbiol/s/latex](http://journals.plos.org/ploscompbiol/s/latex)_
-
 # Introduction
 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Curabitur eget porta erat. Morbi consectetur est vel gravida pretium. Suspendisse ut dui eu ante cursus gravida non sed sem. Phasellus mauris velit, dapibus finibus elementum vel, pulvinar non tellus. Nunc pellentesque pretium diam, quis maximus dolor faucibus id. Nunc convallis sodales ante, ut ullamcorper est egestas vitae. Nam sit amet enim ultrices, ultrices elit pulvinar, volutpat risus.
+-purpose/definitions (EF)
 
-A list
+#Data
+-variables+data appendix (JA)
 
-- Item 1
-- Item 2
+#Data Cleaning
+-NLP (ZA)
+-sentiment analysis (EF)
+-other data cleaning (MK?)
 
-Here are two sample references: @Feynman1963118 [@Dirac1953888].
+#Methods
+-Amazon Turk (MK)
+-SQL (ZR)
+
+#Models
+-tree (MK)
+-SVM (ZR)
+-Clustering (ZR)
+-Log (EF)
+-Shiny app (JA)
+
+#Future Works
+-all
 
 # References {#references .unnumbered}
+
