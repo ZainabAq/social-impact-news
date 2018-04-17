@@ -1,0 +1,58 @@
+---
+title: Classifying Socially Impactful Articles
+author:
+  - name: Julianna Alvord
+    email: jalvord@smith.edu
+    affiliation: Smith College
+  - name: Minji Kang
+    email: mkang@smith.edu
+    affiliation: Smith College
+  - name: Zainab Rizvi
+    email: srizvi@smith.edu
+    affiliation: Smith College
+  - name: Erina Fukuda
+    email: efukuda@smith.edu
+    affiliation: Smith College
+address:
+  - code: Smith College
+    address: Statistical & Data Sciences, 1 Chapin Way Northampton, Massachusetts 01063
+    
+abstract: |
+  abstract goes here
+  
+author_summary: |
+  author summary goes here
+
+bibliography: mybibfile.bib
+output: rticles::plos_article
+csl: plos.csl
+---
+
+# Introduction
+
+-purpose/definitions (EF)
+
+#Data
+-variables+data appendix (JA)
+
+#Data Cleaning
+-NLP (ZA)
+-sentiment analysis (EF)
+-other data cleaning (MK?)
+
+#Methods
+-Amazon Turk (MK)
+-SQL (ZR)
+
+#Models
+-tree (MK)
+-SVM (ZR)
+-Clustering (ZR)
+-Log (EF)
+-Shiny app (JA)
+
+#Future Works
+-all
+
+# References {#references .unnumbered}
+
