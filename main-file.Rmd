@@ -67,11 +67,7 @@ rated_200 <- read_csv("rated_200.csv")
 tally(~Section, data_10000)
 politics <- data_10000 %>%
   filter(Section == "Politics")
-politics <- politics[151:225,]
 write.table(politics, file="politics.csv", sep =",", row.names=F)
-#politics_75 <-read_csv("text-data-politics.csv")
-#politics_75 <- politics_75[151:225,]
-#write.table(politics_75, file="politics_75.csv", sep=",",row.names=F)
 ###################################################################################################
 
 rated_200 <- rated_200 %>%
@@ -145,7 +141,7 @@ table(m4_estimates, clean_test$Impact1)
 
 ##Boosting with Classification 
 clean_boost <- clean_200 %>%
-  select( -Tags, -`Sort_(Views)`, -text, -keywords, -summary, -URL, -Title, -Authors, -Staection, -Publish_date, -X1)
+  select( -Tags, -`Sort_(Views)`, -text, -keywords, -summary, -URL, -Title, -Authors, -Section, -Publish_date, -X1)
 
 m5<- gbm(Impact1 ~., data = clean_boost, distribution = "bernoulli", n.trees = 500, cv.folds = 5, verbose = F)
 best.iter = gbm.perf(m5, method = "cv")
@@ -154,17 +150,15 @@ clean_boost2 <- clean_boost %>%
   mutate(Impact = ifelse(Impact1 == 1, "Y", "N" )) %>%
   select(-Impact1)
 
-m7 <- gbm(Impact1 ~., data = clean_boost, distribution = "bernoulli", cv.folds = 5, verbose = F, shrinkage = 0.01, interaction.depth = 1, n.trees = best.iter, n.minobsinnode = 1)
-summary(m7)
-
 set.seed(5)
 fitControl = trainControl(method="cv", summaryFunction =  twoClassSummary, classProbs = TRUE, number = 5, returnResamp = "all")
 m6 <- train(Impact~., data=clean_boost2, method="gbm", trControl=fitControl, tuneGrid=data.frame(.n.trees=best.iter, .shrinkage=0.01, .interaction.depth=1, .n.minobsinnode=1), verbose=FALSE,  metric = "ROC", distribution = "bernoulli")
 m6
 confusionMatrix(m6)
-confusionMatrix(m6_estimates, as.factor(clean_boost2$Impact))
 m6_estimates = predict(m6, clean_boost2)
 postResample(m6_estimates, as.factor(clean_boost2$Impact))
+```
+
 ##Accuracy 0.859, avg = 0.74
 
 
@@ -198,44 +192,47 @@ summary(tree_p)
 plot(tree_p)
 text(tree_p, pretty=0)
 
-#Dividing the data into testing and training
-set.seed(5)
-politics_train <- politics_300 %>%
-  sample_frac(0.5)
-
-politics_test <- politics_300%>%
-  setdiff(politics_train)
-
-##Classication tree
-set.seed(5)
-mp0 <- tree(as.factor(impact_score) ~ ., data=politics_train)
-summary(mp0)
-plot(mp0)
-text(mp0, pretty = 0)
-mp0_estimates = predict(mp0, politics_test, type = "class")
-table(mp0_estimates, politics_test$impact_score)
-(49+27)/115 ##66% correct predictions 
-
-##Pruned tree with CV 
-set.seed(5)
-mp1 <- cv.tree(mp0, FUN = prune.misclass)
-plot(mp1$size, mp1$dev, type = "b")
-mp2 <- prune.misclass(mp0, best = 5)
-plot(mp2)
-text(mp2, pretty = 0)
-mp2_estimates = predict(mp2, politics_test, type = "class")
-table(mp2_estimates, politics_test$impact_score)
-(56+26)/115 ##71.3% correct predictions
 
 
-##Random Forest model 
-set.seed(5)
-mp3 <- randomForest(as.factor(impact_score) ~.,data=politics_train, importance = TRUE, ntree=2000, mtry=5)
-varImpPlot(mp3)
-mp3_estimates = predict(mp3, newdata = politics_test, n.trees = 2000) 
-table(mp3_estimates, politics_test$impact_score)
-(60+15)/115 ##65.2% correct predictions
+# Erina
 
+```{r}
+#join manually rated impact scores
+MK <- read_csv("C:/Users/choco/Desktop/SPRING 2018/Capstone/minji_50_impact.csv") %>%
+  select(-X1) #import original data
+JA <- read_csv("C:/Users/choco/Desktop/SPRING 2018/Capstone/julianna_50_impact.csv")  %>%
+  select(-X1)#import original data
+ZA <- read_csv("C:/Users/choco/Desktop/SPRING 2018/Capstone/zainab_50_impact.csv")  %>%
+  select(-X1)#import original data
+EF <- read_csv("C:/Users/choco/Desktop/SPRING 2018/Capstone/erina_50_impact.csv") %>%
+  select(-X1) #import original data
+
+MK$`Publish date` = as.character(MK$`Publish date`)
+JA$`Publish date` = as.character(JA$`Publish date`)
+ZA$`Publish date` = as.character(ZA$`Publish date`)
+EF$`Publish date` = as.character(EF$`Publish date`)
+
+rated_200 <- rbind(MK, JA)
+rated_200 <- rbind(rated_200,ZA)
+rated_200 <- rbind(rated_200,EF)
+
+write.csv(rated_200, file = "C:/Users/choco/Desktop/SPRING 2018/Capstone/rated_200.csv")
+
+MK2 <- read_csv("C:/Users/choco/Desktop/SPRING 2018/Capstone/minji_75_impact.csv")
+JA2 <- read_csv("C:/Users/choco/Desktop/SPRING 2018/Capstone/julianna_75_impact.csv")
+ZA2 <- read_csv("C:/Users/choco/Desktop/SPRING 2018/Capstone/zainab_75_impact.csv")
+EF2 <- read_csv("C:/Users/choco/Desktop/SPRING 2018/Capstone/erina_75_impact.csv")
+
+
+textual <- read_csv("C:/Users/choco/Desktop/SPRING 2018/Capstone/text-data-politics (3).csv") %>%
+  select(c(URL, Text))
+
+MK2 <- left_join(MK2, textual, by="URL")
+MK2 <- MK2 %>%
+  select(-Text.x) %>%
+  rename(Text = Text.y)
+
+MK2 <- MK2[c(2,1,3)]
 
 ##Random Forest model with Conditional inference (uses statistical test rather than purity)
 set.seed(5)
@@ -251,12 +248,12 @@ table(mp4_estimates, politics_test$impact_score)
 mp5<- gbm(impact_score ~., data = politics_300, distribution = "bernoulli", n.trees = 2000, cv.folds = 5, verbose = F)
 best.iter = gbm.perf(mp5, method = "cv")
 
-politics_boost <- politics_300 %>%
-  mutate(Impact = ifelse(impact_score == 1, "Y", "N" )) %>%
-  select(-impact_score)
 
-mp7 <- gbm(impact_score ~., data = politics_300, distribution = "bernoulli", cv.folds = 5, verbose = F, shrinkage = 0.01, interaction.depth = 1, n.trees = best.iter, n.minobsinnode = 1)
-summary(mp7)
+
+rated_300 <- rbind(MK2, JA2)
+rated_300 <- rbind(rated_300,ZA2)
+rated_300 <- rbind(rated_300,EF2)
+
 
 set.seed(5)
 fitControl = trainControl(method="cv", summaryFunction =  twoClassSummary, classProbs = TRUE, number = 5, returnResamp = "all")
@@ -298,8 +295,6 @@ check
 ```
 
 
-# Erina
-
 ```{r}
 # data_1000_EF<- read_csv("Raw data_10000 articles_Jul-Dec 2017.csv")
 # names(data_1000_EF)
@@ -313,6 +308,7 @@ check
 library(readr)
 library(tidytext)
 library(dplyr)
+library(tidyr)
 library(stringr)
 
 data_EF <- read_csv("Raw data_10000 articles_Jul-Dec 2017.csv") #import original data
@@ -347,6 +343,14 @@ afinn_pos4 <- get_sentiments("afinn") %>%
 afinn_pos5 <- get_sentiments("afinn") %>%
     filter(score == 5)
 
+filter_sentiments <- function(x, ...) {
+  get_sentiments("afinn") %>%
+    filter(score == x)
+}
+
+output <- lapply(-5:5, filter_sentiments) %>%
+  bind_rows()
+
 
 words <- text %>%
 #  group_by(URL) %>%
@@ -357,60 +361,160 @@ words <- words %>%
 
 neg5 <- words %>%
   group_by(URL) %>%
-	inner_join(afinn_neg5) %>%
+	inner_join(output) %>%
 	count(word, sort=TRUE)
+neg5$score <- "-5"
 
 neg4 <- words %>%
   group_by(URL) %>%
 	inner_join(afinn_neg4) %>%
 	count(word, sort=TRUE)
+neg4$score <- "-4"
 
 neg3 <- words %>%
   group_by(URL) %>%
 	inner_join(afinn_neg3) %>%
 	count(word, sort=TRUE)
+neg3$score <- "-3"
 
 neg2 <- words %>%
   group_by(URL) %>%
 	inner_join(afinn_neg2) %>%
 	count(word, sort=TRUE)
+neg2$score <- "-2"
 
 neg1 <- words %>%
   group_by(URL) %>%
 	inner_join(afinn_neg1) %>%
 	count(word, sort=TRUE)
-
-zero <- words %>%
-  group_by(URL) %>%
-	inner_join(afinn_0) %>%
-	count(word, sort=TRUE)
+neg1$score <- "-1"
 
 pos1 <- words %>%
   group_by(URL) %>%
 	inner_join(afinn_pos1) %>%
 	count(word, sort=TRUE)
+pos1$score <- "1"
 
 pos2 <- words %>%
   group_by(URL) %>%
 	inner_join(afinn_pos2) %>%
 	count(word, sort=TRUE)
+pos2$score <- "2"
 
 pos3 <- words %>%
   group_by(URL) %>%
 	inner_join(afinn_pos3) %>%
 	count(word, sort=TRUE)
+pos3$score <- "3"
 
 pos4 <- words %>%
   group_by(URL) %>%
 	inner_join(afinn_pos4) %>%
 	count(word, sort=TRUE)
+pos4$score <- "4"
 
 pos5 <- words %>%
   group_by(URL) %>%
 	inner_join(afinn_pos5) %>%
 	count(word, sort=TRUE)
+pos5$score <- "5"
 
-###at "2.2 Sentiment analysis with inner join"
+neg5_2 <- neg5 %>%
+  group_by(URL) %>%
+  summarise(n_sum=sum(n))
+neg5_2$score <- "neg5"
+
+neg4_2 <- neg4 %>%
+  group_by(URL) %>%
+  summarise(n_sum=sum(n))
+neg4_2$score <- "neg4"
+
+neg3_2 <- neg3 %>%
+  group_by(URL) %>%
+  summarise(n_sum=sum(n))
+neg3_2$score <- "neg3"
+
+neg2_2 <- neg2 %>%
+  group_by(URL) %>%
+  summarise(n_sum=sum(n))
+neg2_2$score <- "neg2"
+
+neg1_2 <- neg1 %>%
+  group_by(URL) %>%
+  summarise(n_sum=sum(n))
+neg1_2$score <- "neg1"
+
+pos1_2 <- pos1 %>%
+  group_by(URL) %>%
+  summarise(n_sum=sum(n))
+pos1_2$score <- "pos1"
+
+pos2_2 <- pos2 %>%
+  group_by(URL) %>%
+  summarise(n_sum=sum(n))
+pos2_2$score <- "pos2"
+
+pos3_2 <- pos3 %>%
+  group_by(URL) %>%
+  summarise(n_sum=sum(n))
+pos3_2$score <- "pos3"
+
+pos4_2 <- pos4 %>%
+  group_by(URL) %>%
+  summarise(n_sum=sum(n))
+pos4_2$score <- "pos4"
+
+pos5_2 <- pos5 %>%
+  group_by(URL) %>%
+  summarise(n_sum=sum(n))
+pos5_2$score <- "pos5"
+
+# rbindfunc <- function(sentiments,x){
+#   sentiments <- rbind(sentiments,x)
+# return(sentiments)
+# }
+
+#lapply(rbindfunc,rbindfunc(sentiment,c(neg3_2,neg2_2,neg1_2,pos1_2,pos2_2,pos3_2,pos4_2,pos5_2)))
+
+sentiment <- rbind(neg5_2, neg4_2)
+sentiment <- rbind(sentiment, neg3_2)
+sentiment <- rbind(sentiment, neg2_2)
+sentiment <- rbind(sentiment, neg1_2)
+sentiment <- rbind(sentiment, pos1_2)
+sentiment <- rbind(sentiment, pos2_2)
+sentiment <- rbind(sentiment, pos3_2)
+sentiment <- rbind(sentiment, pos4_2)
+sentiment <- rbind(sentiment, pos5_2)
+
+sentiment <- sentiment %>%
+  spread(key=score, value=n_sum)
+
+sentiment[is.na(sentiment)] <- 0
+
+sentiment <- sentiment %>%
+  mutate(total_n = neg5+neg4+neg3+neg2+neg1+pos1+pos2+pos3+pos4+pos5) %>%
+  mutate(neg5=neg5/total_n) %>%
+  mutate(neg4=neg4/total_n) %>%
+  mutate(neg3=neg3/total_n) %>%
+  mutate(neg2=neg2/total_n) %>%
+  mutate(neg1=neg1/total_n) %>%
+  mutate(pos1=pos1/total_n)%>%
+  mutate(pos2=pos2/total_n)%>%
+  mutate(pos3=pos3/total_n)%>%
+  mutate(pos4=pos4/total_n)%>%
+  mutate(pos5=pos5/total_n)
+
+data_added_sentiment <- full_join(data_EF,sentiment,by="URL")
+
+data_added_sentiment <- data_added_sentiment %>%
+  mutate(average_sent = neg5*-5+neg4*-4+neg3*-3+neg2*-2+neg1*-1+pos1*1+pos2*2+pos3*3+pos4*4+pos5*5)
+
+data_added_sentiment <- data_added_sentiment %>%
+  select(-total_n)
+
+
+
+write.csv(data_added_sentiment, file = "C:/Users/choco/Desktop/SPRING 2018/Capstone/data_added_sentiment.csv")
 ```
 
 
