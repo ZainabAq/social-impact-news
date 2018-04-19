@@ -39,7 +39,26 @@ We define socially impactful as artcles that change the readers’ way of thinki
 
 #Collection of Additional Data
 
-_Article Classification._
+## Text Mining
+
+We realized that all of our existing data tell us about the social media reach of a given article. However, one of the problems specified by our client was that social media reach is oftentimes not a good indicator of whether the article is socially impactful or not. In order to add another dimension to our data, we decided to retrieve the text of the articles from the URLs that were provided to us in the dataset. 
+
+We wrote a Python script that takes in the URL as input and scrapes the webpage to retrieve the text. We used the BeautifulSoup package in Python for this purpose. 
+
+## Incorporating Natural Language Processing Statistics
+
+We decided to supplement the social media statistics we got from our client with some basic text mining statistics that give us some information about the text. As discussed earlier, since the task at hand is to judge the impact of the articles, we made the assumption that there would be some relationship between the text itself and the impact it creates. 
+
+We wrote a script in Python for this purpose using the textstat Python package.The script takes as input the text of the articles (obtained from the parser) and outputs the computed statistics. Specifically, we calculate the following five statistics: 
+
+1. word_count: This calculates the number of words in the text.
+2. sentence_count: This calculates the number of sentences in the text.
+3. readability_score: This calculates the Flesch Reading Ease Score which is helpful to access the ease of readability in a document and ranges from 0 to 100 where 0 is difficult to read and 100 is easy to read.
+4. grade_level: This is calculated using the Automated Readability Index which outputs a number that approximates the grade level needed to comprehend the given text. This ranges from 1 to 12. 
+5. smog_index: This calculates the a statistics called Simple Measure of Gobbledygook for the given text. In simple terms, smog index calculates the difficulty level of a sentences based on the number of words that are polysyllabic. It ranges from 5 to 22 which corresponds to the age of the reader who can understand the given text. 
+
+
+## Article Classification
 In order to run supervised learning models, data collection was needed to create the training set. Thus, we decided to unitize Amazon Mechanical Turk (MTurk) for data collection to ensure the data was from a random sample. MTurk is a crowdsourcing internet marketplace where “Requesters” create tasks that require human intelligence and “Workers” are paid upon successful completion of each task also known as HITs (Human Intelligence Tasks). 
 
 As requesters, we launched tasks that provided a hyperlink to an article and the flow chart that was previously created to help defined classification of socially impactful articles. For each HIT the workers were asked to click the hyperlink to be directed to the article, read the article, and classify the articles after following the given flow chart. We launched 2500 articles and requested 3 iterations of each article. Thus, we had a total of 7500 HITs. Upon data collection, analysis of the 7500 HITs was conducted. Pearson correlation of the three iteration indicated that none of the interactions were even slightly correlated to one another, implying that the results of the classification of the articles were random. Another analysis was conducted to test whether the correlation was statistically significantly different from an actual random imputation of the classification of the articles. The results indicated that the data collected through MTurk was no different from random imputations. 
@@ -49,7 +68,6 @@ Following the results of the first MTurk, we launched another set of tasks that 
 Finally, the data collection was conducted by our group members going through each articles and classifying the articles ourselves following the flow chart we created. We classified a total of 900 articles and used this 900 articles as the training set.
 
 #Data Cleaning
--NLP (ZA)
 
 Once the NLP and sentiment analysis was completed, the original traffic data of each articles and the new NLP and sentiment analysis as well as the social impact classification outcome were complied together. In order to build supervised learning models, only numerical vectors were selected for data analysis. Thus variables such as `Tags`, `Published_Date`, `Author` and the parsed `Text` was removed. However we kept `URL` and `Title` variables, but those were not included in the models. Additionally, six duplicated rows were removed. 
 
