@@ -35,7 +35,15 @@ Our team used articles from a major Online news publication and tried to create 
 We define socially impactful as artcles that change the readers’ way of thinking. It can also bring someone to take action or change the way they act. Even if it does not make them change their views, if the article leaves an impression or makes readers think it can also be a socially impactful article as well. Therefore, some impacts that the article can have on readers are changing the way they think, leaving an impression, or reaffirming their ideas. It could also make readers change their habits or actions based on what they have read.
 
 #Pre-existing Data
--variables+data appendix (JA)
+The data for this project were provided by the online news source which contained information for their top 10000 most-viewed articles. This news source collects and calculates data on many variables such as page views, returning visitors, and social interactions for each of their articles. The dataset given to us included 33 variables, the majority of which were numeric. To understand these metrics, we referred to the company’s application programming interface (API) which contained a description of 21 metrics. The API can be found at this address: https://www.parse.ly/help/api/available-metrics/. 
+
+Other numeric metrics not included in this API were average views for returning and new visitors, as well as direct, other, internal, and search referrals. Direct referrals are a count of ...
+
+The final six variables included the URL, title, publish date, author(s), section, and tags. Example of tags are ‘@ads_scary’ and ‘@health_depression’. Some sections include ‘Crime’, ‘Comedy’, ‘Entertainment’, and ‘Politics’.
+
+_Descriptive Statistics._
+For this entire dataset of 10,000 observations, the average numbers of page views was 105904.9. The average number of social interactions was 12957.97. An average of 77584.06 engaged minutes were spent on each article. The top three sections were Politics (27.94% of articles), Entertainment (18.62 %), and Comedy (4.86%). 
+
 
 #Collection of Additional Data
 
@@ -86,7 +94,19 @@ We fit a stepwise logistic regression as another measure to determine if an arti
 
 This model was cross-validated, and we noticed that the model had a sensitivity of 0.47 but a specificity of 0.91. Therefore, it does a very good job of classifying non-socially impactful articles but does not perform well in classifying socially impactful articles. We are currently working on first classifying non-socially impactful articles using this logistic regression, then taking the articles classified as “socially impactful” and re-fitting another model for it for better accuracy. We will need to be careful of overfitting, however, and we should proceed with caution.
 
--Shiny app (JA)
+_Creation of Shiny App._
+In order to display the results of our models, a web application was created using the Shiny package in R. The basic mechanism of the app starts with a user input of an article’s URL. In order for the app to correctly run, the URL must be one of the 891 found in our SQL table. From there, multiple models predict the article’s probability of social impact. Those probabilities are averaged. The probabilities reactively change for each article. 
+
+_Method._
+Three of our models are displayed on the app: the optimized boosting model, support vector machine model, and the multiple logistic model. Each model was saved as R data (.rda) files.  These files were loaded into an r script at the top of the app file. 
+
+An important aspect of the app’s server is the SQL query. First, the app connects to the database. Within a reactive function from the Shiny package, the politics table is exported, while filtering by the user input URL. In order to query the title, the title column is selected from table created in the initial reactive function, and transformed to a dataframe. From there, this object is transformed into a vector to be displayed on the app by the renderText function from the Shiny package. 
+
+_Predicting in Shiny._
+Within a renderText function, the title and URL columns from the table created in the reactive function are removed. This new table is used within the predict function to predict the probability of social impact from each model
+
+_Interface._
+The app contains four rows. The top row contains the title of the app, “Is this Article Socially Impactful?” The row below contains a text input box that prompts the user to enter a URL as well as a location for the title of the corresponds to appear. Below this, a visualization using ggplot2 displays the distributions of probabilities for each of the models. Once an article is entered, vertical lines appear at the probabilities which are predicted by each model. The fourth row displays the probabilities from the three models as well as the average. The probabilities are each a different color that coordinate with the distributions and vertical lines of the visualization. 
 
 #Limitations & Topics of Further Discussion
 -problems in data collection (bias sampling)
