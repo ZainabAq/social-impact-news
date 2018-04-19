@@ -18,10 +18,10 @@ address:
     address: Statistical & Data Sciences, 1 Chapin Way Northampton, Massachusetts 01063
     
 abstract: |
-  abstract goes here
+  We tried to find a way to classify socially impactful articles based on collected and textual data. We created three models (tree, SVm and logistic regression) to haev several approaches in identifying socially impactful articles. Afterwards, we created a tool through Shiny to create a friendly user-interface that analyses articles based on its collected data and textual analyses. By doing so, the tool is able to give it four scores. The scores serve as a simple guideline for readers curious to know if an article is socially impactful simply by inputting a URL.
   
 author_summary: |
-  author summary goes here
+  We are students at Smith College enrolled in the SDS 410 Capstone course in the Statistical & Data Sciences Department.
 
 bibliography: mybibfile.bib
 output: rticles::plos_article
