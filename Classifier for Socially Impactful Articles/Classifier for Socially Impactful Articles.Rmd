@@ -85,8 +85,9 @@ Overall, words rated higher on the scale of 1-5 (i.e. +5 and -5) were not as pre
 
 -other data cleaning (MK?)
 
-#Methods
--SQL (ZR)
+## MySQL database
+Once we had the data cleaned, we uploaded it on the MySQL Server database. Even though we are currently only working with 900 articles, we wanted to make sure that our project is scalable. Putting the dataset in a database also unified the schema for our different models. 
+
 
 #Models
 
@@ -96,7 +97,31 @@ Decision trees offer facilitated interpretation that is simple and easy to under
 
 Using the `caret` package in R, the gradient boosting model split the data internally and ran its own training and testing models with five cross validation folds. The model also tuned the parameter with five cross validation folds. The optimal tuning parameters with the highest Receiver Operating Characteristics (ROC = 0.807) was 650 trees with shrinkage of 0.01, interaction depth of 3 and 9 minimum number of observations in tree’s terminal nodes. Thus, these parameters were used for the final model. The gradient boosting model had an accuracy of 83.5% and the 95% confidence interval for accuracy was between 80.8% and 85.8%. In addition the model also showed high sensitivity value of 0.918, but a lower specificity value of 0.692. Thus the model was positively classifying impactful articles better than negatively classifying impactful articles. The top 25 most important variables of the boosting model results are shown in Figure X. 
 
--SVM (ZR)
+## Support Vector Machines
+
+An SVM is a vector space based machine learning method where the goal is to find a decision boundary between two classes that is maximally far from any point in the training data (possibly discounting some points as outliers or noise).
+
+Our main motivation for using Support Vector Machines to classify the articles was that SVMs are known to perform well in text classification tasks, especially with small training sets. We use the e1071 package in R and trained the SVM on 70% training data from our classified articles. When we predicted on the remaining 30% of the data, we found that the testing RMSE was 64%.
+
+After cross-validation and tuning, we found that a radial kernel performs best on our data with a low cost and high gamma value.
+
+A kernel is a compact representation of the similarity in the dataset. Since we are working with multidimensional data, we tried linear, polynomial, sigmoid and radial kernels to see which one gave the lowest training RMSE. 
+
+We also iterated through different cost functions and realized that the SVM performs the best with a low cost which means that there is a high error on the training set compared to the testing set. We also had high gamma parameter which indicates that there is  high standard deviation between the points. 
+
+We found that the ten most significant predictors for the SVM, in order of significance, are: 
+
+1. Total words
+2. Visitors
+3. Positivity score
+4. Mobile views
+5. Smog index
+6. Grade level
+7. Readability score
+8. Returning visitors
+9. Average minutes per new visitor
+10. Negativity score
+
 -Clustering (ZR)
 
 _Logistic Regression. (to be changed due to changes in data + variables/model)_
