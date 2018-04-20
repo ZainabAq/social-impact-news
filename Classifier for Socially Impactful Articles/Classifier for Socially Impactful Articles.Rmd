@@ -18,7 +18,7 @@ address:
     address: Statistical & Data Sciences, 1 Chapin Way Northampton, Massachusetts 01063
     
 abstract: |
-  We tried to find a way to classify socially impactful articles based on collected and textual data. We created three models (tree, SVm and logistic regression) to haev several approaches in identifying socially impactful articles. Afterwards, we created a tool through Shiny to create a friendly user-interface that analyses articles based on its collected data and textual analyses. By doing so, the tool is able to give it four scores. The scores serve as a simple guideline for readers curious to know if an article is socially impactful simply by inputting a URL.
+  This project aimed to find a way to classify socially impactful articles based on collected and textual data. We created three models (tree, SVM and logistic regression) to have several approaches in identifying socially impactful articles. Afterwards, we created a tool through Shiny to create a friendly user-interface that displays the results of these models plus an average of the three. By doing so, the tool provides four scores. The scores serve as a simple guideline for readers curious to know if an article is socially impactful simply by inputting a URL.
   
 author_summary: |
   We are students at Smith College enrolled in the SDS 410 Capstone course in the Statistical & Data Sciences Department.
@@ -32,17 +32,20 @@ csl: plos.csl
 
 Our team used articles from a major Online news publication and tried to create a tool that could automatically classify socially impactful articles from those that are not based on several aspects of the article. These aspects included the article’s presence in social media (e.g. number of likes, shares, etc.), level of readability and the sentiments associated with the words used.
 
-We define socially impactful as artcles that change the readers’ way of thinking. It can also bring someone to take action or change the way they act. Even if it does not make them change their views, if the article leaves an impression or makes readers think it can also be a socially impactful article as well. Therefore, some impacts that the article can have on readers are changing the way they think, leaving an impression, or reaffirming their ideas. It could also make readers change their habits or actions based on what they have read.
+We define socially impactful articles as those that change the readers’ way of thinking. It can also bring someone to take action or change the way they act. Even if it does not make them change their views, if the article leaves an impression or makes readers think it can also be a socially impactful article as well. Therefore, some impacts that the article can have on readers are changing the way they think, leaving an impression, or reaffirming their ideas. It could also make readers change their habits or actions based on what they have read.
 
 #Pre-existing Data
-The data for this project were provided by the online news source which contained information for their top 10000 most-viewed articles. This news source collects and calculates data on many variables such as page views, returning visitors, and social interactions for each of their articles. The dataset given to us included 33 variables, the majority of which were numeric. To understand these metrics, we referred to the company’s application programming interface (API) which contained a description of 21 metrics. The API can be found at this address: https://www.parse.ly/help/api/available-metrics/. 
+The data for this project were provided by the online news source which contained information for their top 10000 most-viewed articles. This news source collects and calculates data on many variables such as page views, returning visitors, and social interactions for each of their articles. The dataset given to us included 33 variables, the majority of which were numeric. To understand these metrics, we referred to the company’s application programming interface (API) which contained a description of 21 metrics. The API can be found at this address: [https://www.parse.ly/help/api/available-metrics/](https://www.parse.ly/help/api/available-metrics/). 
 
 Other numeric metrics not included in this API were average views for returning and new visitors, as well as direct, other, internal, and search referrals. Direct referrals are a count of ...
 
-The final six variables included the URL, title, publish date, author(s), section, and tags. Example of tags are ‘@ads_scary’ and ‘@health_depression’. Some sections include ‘Crime’, ‘Comedy’, ‘Entertainment’, and ‘Politics’.
+The final six variables included the URL, title, publish date, author(s), section, and tags. Example of tags are ‘ads_scary’ and 'health_depression'. Some sections include ‘Crime’, ‘Comedy’, ‘Entertainment’, and ‘Politics’.
 
 _Descriptive Statistics._
 For this entire dataset of 10,000 observations, the average numbers of page views was 105904.9. The average number of social interactions was 12957.97. An average of 77584.06 engaged minutes were spent on each article. The top three sections were Politics (27.94% of articles), Entertainment (18.62 %), and Comedy (4.86%). 
+
+_Subsetting our Data._
+While initially defining social impact, we discovered the difficulty of comparing articles from different sections. For example, an article from the entertainment section would never seem socially impactful when compared to an article from a section like "Black Voices." We decided that this project needed to start with only one section. The section chosen was politics, which had the highest number of articles with 2,794.
 
 
 #Collection of Additional Data
@@ -73,7 +76,7 @@ As requesters, we launched tasks that provided a hyperlink to an article and the
 
 Following the results of the first MTurk, we launched another set of tasks that provided the parsed text of the article and same flow chart from the pervious task. For each HIT the workers were asked to read the parsed text, summarize the text in two to five sentences, and classify the articles after following the given flow chart. This time, we launched 500 articles with 3 iterations of each articles. Thus, we had a total 1500 HITs. The results of the data collection had 97% of the articles rated as socially impactful. Thus, this data was discarded as well. 
 
-Finally, the data collection was conducted by our group members going through each articles and classifying the articles ourselves following the flow chart we created. We classified a total of 900 articles and used this 900 articles as the training set.
+Finally, the data collection was conducted by our group members going through each articles and classifying the articles ourselves following the flow chart we created. We classified a total of 900 articles and used these 900 articles as the training set.
 
 #Data Cleaning
 
@@ -93,24 +96,58 @@ Overall, words rated higher on the scale of 1-5 (i.e. +5 and -5) were not as pre
 
 -other data cleaning (MK?)
 
-#Methods
--SQL (ZR)
+## MySQL database
+Once we had the data cleaned, we uploaded it on the MySQL Server database. Even though we are currently only working with 900 articles, we wanted to make sure that our project is scalable. Putting the dataset in a database also unified the schema for our different models. 
+
 
 #Models
 
 _Decision Tree._
-
 Decision trees offer facilitated interpretation that is simple and easy to understand. Decision trees provide comprehensive analysis of each decision and partitions the data accordingly. We chose to use gradient boosting as one of our model because it avoids over fitting. Boosting reduces variance, unlike other decision tree models. Given a baseline model, boosting fits a decision tree to the residuals from the baseline model. Thus, Boosting grows trees sequentially allowing the next tree to be fitted into a function to update their residuals. Since boosting learns information from previous trees, the error rate is also usually lower than other forest models.
 
 Using the `caret` package in R, the gradient boosting model split the data internally and ran its own training and testing models with five cross validation folds. The model also tuned the parameter with five cross validation folds. The optimal tuning parameters with the highest Receiver Operating Characteristics (ROC = 0.807) was 650 trees with shrinkage of 0.01, interaction depth of 3 and 9 minimum number of observations in tree’s terminal nodes. Thus, these parameters were used for the final model. The gradient boosting model had an accuracy of 83.5% and the 95% confidence interval for accuracy was between 80.8% and 85.8%. In addition the model also showed high sensitivity value of 0.918, but a lower specificity value of 0.692. Thus the model was positively classifying impactful articles better than negatively classifying impactful articles. The top 25 most important variables of the boosting model results are shown in Figure X. 
 
--SVM (ZR)
--Clustering (ZR)
+## Support Vector Machines
+
+An SVM is a vector space based machine learning method where the goal is to find a decision boundary between two classes that is maximally far from any point in the training data (possibly discounting some points as outliers or noise).
+
+Our main motivation for using Support Vector Machines to classify the articles was that SVMs are known to perform well in text classification tasks, especially with small training sets. We use the e1071 package in R and trained the SVM on 70% training data from our classified articles. When we predicted on the remaining 30% of the data, we found that the testing RMSE was 64%.
+
+After cross-validation and tuning, we found that a radial kernel performs best on our data with a low cost and high gamma value.
+
+A kernel is a compact representation of the similarity in the dataset. Since we are working with multidimensional data, we tried linear, polynomial, sigmoid and radial kernels to see which one gave the lowest training RMSE. 
+
+We also iterated through different cost functions and realized that the SVM performs the best with a low cost which means that there is a high error on the training set compared to the testing set. We also had high gamma parameter which indicates that there is  high standard deviation between the points. 
+
+We found that the ten most significant predictors for the SVM, in order of significance, are: 
+
+1. Total words
+2. Visitors
+3. Positivity score
+4. Mobile views
+5. Smog index
+6. Grade level
+7. Readability score
+8. Returning visitors
+9. Average minutes per new visitor
+10. Negativity score
+
 
 _Logistic Regression. (to be changed due to changes in data + variables/model)_
 We fit a stepwise logistic regression as another measure to determine if an article was socially impactful or not. The model included the sentiment variables of -1 to -3 and +1 to +2, presence in social media (i.e. social interactions), smog index and length of the article (i.e. total number of words). All were significant (p-value < 0.05) and the model had a McFadden’s R-squared of 0.143. In addition, the logistic regression had an area under the curve of 0.820.
 
 This model was cross-validated, and we noticed that the model had a sensitivity of 0.47 but a specificity of 0.91. Therefore, it does a very good job of classifying non-socially impactful articles but does not perform well in classifying socially impactful articles. We are currently working on first classifying non-socially impactful articles using this logistic regression, then taking the articles classified as “socially impactful” and re-fitting another model for it for better accuracy. We will need to be careful of overfitting, however, and we should proceed with caution.
+
+## Clustering 
+
+Since all the models we have used are supervised learning models that train on numerical predictors, we also attempted unsupervised k-means clustering to see if we could derive any insight from only using text as a predictor. Our textual mining statistics 
+convey important information about the text of the articles but we were curious to see if there are semantic differences that were not captured by numerical predictors.
+
+We used k-means clustering using the nltk package in Python. K-means is a clustering algorithm that classifies a given dataset around a predefined k number of clusters. 
+
+Unfortunately, we found that the optimum number of clusters was 1 which indicates that there were not meaningful distinctions between the group of articles that we rated as socially impactful and the group of articles we rates as not being socially impactful as they were all put in the same cluster. The next optimum number of clusters was 8 but on further investigation, we could not find a significant relationship among the contents of each cluster and the assignment of socially impactful articles to clusters was random. Therefore, we have decided not to include clustering in our final ensemble model. 
+
+## Shiny App
 
 _Creation of Shiny App._
 In order to display the results of our models, a web application was created using the Shiny package in R. The basic mechanism of the app starts with a user input of an article’s URL. In order for the app to correctly run, the URL must be one of the 891 found in our SQL table. From there, multiple models predict the article’s probability of social impact. Those probabilities are averaged. The probabilities reactively change for each article. 
@@ -127,7 +164,7 @@ _Interface._
 The app contains four rows. The top row contains the title of the app, “Is this Article Socially Impactful?” The row below contains a text input box that prompts the user to enter a URL as well as a location for the title of the corresponds to appear. Below this, a visualization using ggplot2 displays the distributions of probabilities for each of the models. Once an article is entered, vertical lines appear at the probabilities which are predicted by each model. The fourth row displays the probabilities from the three models as well as the average. The probabilities are each a different color that coordinate with the distributions and vertical lines of the visualization. 
 
 #Limitations & Topics of Further Discussion
-Although we were able to create a product to measure social impactfulness of articles, we acknowledge that our tool has limitations that should be considered when being used. For one, the rated data of 900 political articles that we used for our models are very biased. This is because we are all students of the same college, are around the same age, etc. Therefore, what we may classify as "socially impactful" may not be representative of all article readers. In addition, "social impact" can be a vague idea and does not 
+There were various limitations to this study. Many of these limitations are connected to our method of data collection. Because we rated the 900 articles ourselves, our data is not independent. Additionally, there is a problem with bias in our data. Only four people were classifying, each with similar educational backgrounds and age. This group is not representative of the entire population. For these reasons, the results of this project are not generalizable.
 
 -problems in data collection (bias sampling)
 -models
