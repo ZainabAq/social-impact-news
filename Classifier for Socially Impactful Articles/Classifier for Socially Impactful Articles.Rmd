@@ -18,7 +18,7 @@ address:
     address: Statistical & Data Sciences, 1 Chapin Way Northampton, Massachusetts 01063
     
 abstract: |
-  We tried to find a way to classify socially impactful articles based on collected and textual data. We created three models (tree, SVm and logistic regression) to haev several approaches in identifying socially impactful articles. Afterwards, we created a tool through Shiny to create a friendly user-interface that analyses articles based on its collected data and textual analyses. By doing so, the tool is able to give it four scores. The scores serve as a simple guideline for readers curious to know if an article is socially impactful simply by inputting a URL.
+  This project aimed to find a way to classify socially impactful articles based on collected and textual data. We created three models (tree, SVM and logistic regression) to have several approaches in identifying socially impactful articles. Afterwards, we created a tool through Shiny to create a friendly user-interface that displays the results of these models plus an average of the three. By doing so, the tool provides four scores. The scores serve as a simple guideline for readers curious to know if an article is socially impactful simply by inputting a URL.
   
 author_summary: |
   We are students at Smith College enrolled in the SDS 410 Capstone course in the Statistical & Data Sciences Department.
@@ -32,17 +32,20 @@ csl: plos.csl
 
 Our team used articles from a major Online news publication and tried to create a tool that could automatically classify socially impactful articles from those that are not based on several aspects of the article. These aspects included the article’s presence in social media (e.g. number of likes, shares, etc.), level of readability and the sentiments associated with the words used.
 
-We define socially impactful as artcles that change the readers’ way of thinking. It can also bring someone to take action or change the way they act. Even if it does not make them change their views, if the article leaves an impression or makes readers think it can also be a socially impactful article as well. Therefore, some impacts that the article can have on readers are changing the way they think, leaving an impression, or reaffirming their ideas. It could also make readers change their habits or actions based on what they have read.
+We define socially impactful articles as those that change the readers’ way of thinking. It can also bring someone to take action or change the way they act. Even if it does not make them change their views, if the article leaves an impression or makes readers think it can also be a socially impactful article as well. Therefore, some impacts that the article can have on readers are changing the way they think, leaving an impression, or reaffirming their ideas. It could also make readers change their habits or actions based on what they have read.
 
 #Pre-existing Data
-The data for this project were provided by the online news source which contained information for their top 10000 most-viewed articles. This news source collects and calculates data on many variables such as page views, returning visitors, and social interactions for each of their articles. The dataset given to us included 33 variables, the majority of which were numeric. To understand these metrics, we referred to the company’s application programming interface (API) which contained a description of 21 metrics. The API can be found at this address: https://www.parse.ly/help/api/available-metrics/. 
+The data for this project were provided by the online news source which contained information for their top 10000 most-viewed articles. This news source collects and calculates data on many variables such as page views, returning visitors, and social interactions for each of their articles. The dataset given to us included 33 variables, the majority of which were numeric. To understand these metrics, we referred to the company’s application programming interface (API) which contained a description of 21 metrics. The API can be found at this address: [https://www.parse.ly/help/api/available-metrics/](https://www.parse.ly/help/api/available-metrics/). 
 
 Other numeric metrics not included in this API were average views for returning and new visitors, as well as direct, other, internal, and search referrals. Direct referrals are a count of ...
 
-The final six variables included the URL, title, publish date, author(s), section, and tags. Example of tags are ‘@ads_scary’ and ‘@health_depression’. Some sections include ‘Crime’, ‘Comedy’, ‘Entertainment’, and ‘Politics’.
+The final six variables included the URL, title, publish date, author(s), section, and tags. Example of tags are ‘ads_scary’ and 'health_depression'. Some sections include ‘Crime’, ‘Comedy’, ‘Entertainment’, and ‘Politics’.
 
 _Descriptive Statistics._
 For this entire dataset of 10,000 observations, the average numbers of page views was 105904.9. The average number of social interactions was 12957.97. An average of 77584.06 engaged minutes were spent on each article. The top three sections were Politics (27.94% of articles), Entertainment (18.62 %), and Comedy (4.86%). 
+
+_Subsetting our Data._
+While initially defining social impact, we discovered the difficulty of comparing articles from different sections. For example, an article from the entertainment section would never seem socially impactful when compared to an article from a section like "Black Voices." We decided that this project needed to start with only one section. The section chosen was politics, which had the highest number of articles with 2,794.
 
 
 #Collection of Additional Data
@@ -73,7 +76,7 @@ As requesters, we launched tasks that provided a hyperlink to an article and the
 
 Following the results of the first MTurk, we launched another set of tasks that provided the parsed text of the article and same flow chart from the pervious task. For each HIT the workers were asked to read the parsed text, summarize the text in two to five sentences, and classify the articles after following the given flow chart. This time, we launched 500 articles with 3 iterations of each articles. Thus, we had a total 1500 HITs. The results of the data collection had 97% of the articles rated as socially impactful. Thus, this data was discarded as well. 
 
-Finally, the data collection was conducted by our group members going through each articles and classifying the articles ourselves following the flow chart we created. We classified a total of 900 articles and used this 900 articles as the training set.
+Finally, the data collection was conducted by our group members going through each articles and classifying the articles ourselves following the flow chart we created. We classified a total of 900 articles and used these 900 articles as the training set.
 
 #Data Cleaning
 
