@@ -103,7 +103,6 @@ Once we had the data cleaned, we uploaded it on the MySQL Server database. Even 
 #Models
 
 _Decision Tree._
-
 Decision trees offer facilitated interpretation that is simple and easy to understand. Decision trees provide comprehensive analysis of each decision and partitions the data accordingly. We chose to use gradient boosting as one of our model because it avoids over fitting. Boosting reduces variance, unlike other decision tree models. Given a baseline model, boosting fits a decision tree to the residuals from the baseline model. Thus, Boosting grows trees sequentially allowing the next tree to be fitted into a function to update their residuals. Since boosting learns information from previous trees, the error rate is also usually lower than other forest models.
 
 Using the `caret` package in R, the gradient boosting model split the data internally and ran its own training and testing models with five cross validation folds. The model also tuned the parameter with five cross validation folds. The optimal tuning parameters with the highest Receiver Operating Characteristics (ROC = 0.807) was 650 trees with shrinkage of 0.01, interaction depth of 3 and 9 minimum number of observations in tree’s terminal nodes. Thus, these parameters were used for the final model. The gradient boosting model had an accuracy of 83.5% and the 95% confidence interval for accuracy was between 80.8% and 85.8%. In addition the model also showed high sensitivity value of 0.918, but a lower specificity value of 0.692. Thus the model was positively classifying impactful articles better than negatively classifying impactful articles. The top 25 most important variables of the boosting model results are shown in Figure X. 
@@ -165,6 +164,8 @@ _Interface._
 The app contains four rows. The top row contains the title of the app, “Is this Article Socially Impactful?” The row below contains a text input box that prompts the user to enter a URL as well as a location for the title of the corresponds to appear. Below this, a visualization using ggplot2 displays the distributions of probabilities for each of the models. Once an article is entered, vertical lines appear at the probabilities which are predicted by each model. The fourth row displays the probabilities from the three models as well as the average. The probabilities are each a different color that coordinate with the distributions and vertical lines of the visualization. 
 
 #Limitations & Topics of Further Discussion
+There were various limitations to this study. Many of these limitations are connected to our method of data collection. Because we rated the 900 articles ourselves, our data are not independent. Additionally, there is a problem with bias in our data. Only four people were classifying, each with similar educational backgrounds and . This group is not representative of the entire population. For these reasons, the results of this project are not generalizable. 
+
 -problems in data collection (bias sampling)
 -models
 -other limitations
