@@ -11,7 +11,6 @@ library(gbm)
 library(adabag)
 library(EnvStats)
 library(caret)
-source("plot_1.R")
 source("findstats.R")
 
 
@@ -29,8 +28,8 @@ ui <- fluidPage(
     mainPanel(
       
       h3("Probability of Social Impact: 78%"),
-      plotOutput("plot_1"),
-      tableOutput("table1"))
+      tableOutput("table1"),
+      textOutput("python1"))
   )
 )
 
@@ -39,13 +38,16 @@ ui <- fluidPage(
 # Define server logic ----
 server <- function(input, output) {
   
-  output$plot_1 <- renderPlot({
-    plot_1()
-  })
   output$table1 <- renderTable({
     findstats(input$URL1)
   })
+  output$python1 <- renderPrint({
+    parser()
+  })
   
+  output$python1 <- renderPrint({
+    csv()
+  })
 }
 
 # Run the app ----
