@@ -2,7 +2,7 @@
 title: "main-file"
 output: html_document
 editor_options: 
-  chunk_output_type: inline
+  chunk_output_type: console
 ---
 
 ```{r setup, include=FALSE}
@@ -10,24 +10,12 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 # Remains the same for everyone
-
 ```{r}
 library(readr)
 # change this according to your
 data_10000 <- read_csv("Raw data_10000 articles_Jul-Dec 2017.csv")
 ```
 
-# Key terms
-
-Social impact:
-change in way of thinking/attitude or brings someone to take action or change the way they act; leaves an impression or makes the reader think even if it doesn’t change his or her views
-
-Quality Journalism:
-accurate, clear, multiple sources, relevance, change in way of thinking/attitude/action (includes above)
-
-_Social impact can be a smaller part of quality journalism but not vice versa?_
-
-https://www.huffingtonpost.com/2012/04/16/huffington-post-pulitzer-prize-2012_n_1429169.html
 
 # Sections for everyone
 
@@ -80,6 +68,7 @@ rated_200 <- read_csv("rated_200.csv")
 tally(~Section, data_10000)
 politics <- data_10000 %>%
   filter(Section == "Politics")
+politics <- politics[151:225,]
 write.table(politics, file="politics.csv", sep =",", row.names=F)
 
 #politics_75 <-read_csv("text-data-politics.csv")
@@ -87,6 +76,9 @@ write.table(politics, file="politics.csv", sep =",", row.names=F)
 #write.table(politics_75, file="politics_75.csv", sep=",",row.names=F)
 ####################################################################################################################
 
+#politics_75 <-read_csv("text-data-politics.csv")
+#politics_75 <- politics_75[151:225,]
+#write.table(politics_75, file="politics_75.csv", sep=",",row.names=F)
 ###################################################################################################
 
 
@@ -161,7 +153,7 @@ table(m4_estimates, clean_test$Impact1)
 
 ##Boosting with Classification 
 clean_boost <- clean_200 %>%
-  select( -Tags, -`Sort_(Views)`, -text, -keywords, -summary, -URL, -Title, -Authors, -Section, -Publish_date, -X1)
+  select( -Tags, -`Sort_(Views)`, -text, -keywords, -summary, -URL, -Title, -Authors, -Staection, -Publish_date, -X1)
 
 m5<- gbm(Impact1 ~., data = clean_boost, distribution = "bernoulli", n.trees = 500, cv.folds = 5, verbose = F)
 best.iter = gbm.perf(m5, method = "cv")
@@ -170,11 +162,15 @@ clean_boost2 <- clean_boost %>%
   mutate(Impact = ifelse(Impact1 == 1, "Y", "N" )) %>%
   select(-Impact1)
 
+m7 <- gbm(Impact1 ~., data = clean_boost, distribution = "bernoulli", cv.folds = 5, verbose = F, shrinkage = 0.01, interaction.depth = 1, n.trees = best.iter, n.minobsinnode = 1)
+summary(m7)
+
 set.seed(5)
 fitControl = trainControl(method="cv", summaryFunction =  twoClassSummary, classProbs = TRUE, number = 5, returnResamp = "all")
 m6 <- train(Impact~., data=clean_boost2, method="gbm", trControl=fitControl, tuneGrid=data.frame(.n.trees=best.iter, .shrinkage=0.01, .interaction.depth=1, .n.minobsinnode=1), verbose=FALSE,  metric = "ROC", distribution = "bernoulli")
 m6
 confusionMatrix(m6)
+confusionMatrix(m6_estimates, as.factor(clean_boost2$Impact))
 m6_estimates = predict(m6, clean_boost2)
 postResample(m6_estimates, as.factor(clean_boost2$Impact))
 
@@ -186,9 +182,10 @@ postResample(m6_estimates, as.factor(clean_boost2$Impact))
 
 ##Merging Data
 politics_300 <- read_csv("text-stats-politics-300.csv")
-politics_ <- data_10000 %>%
+politics <- data_10000 %>%
   filter(Section == "Politics")
-politics_2 <- politics[1:300,]
+politics_4 <- politics[401:450,]
+write.table(politics_4, file="politics_401_450.csv", sep =",", row.names = F)
 politics_300 <- left_join(politics_300, politics_2, by = "URL")
 write.table(politics_300, file="politics-300-merged.csv", sep =",", row.names=F)
 politics_300 <- politics_300 %>% 
@@ -196,39 +193,75 @@ politics_300 <- politics_300 %>%
   select(-ID, -URL, -text, -`Publish date`, -Authors, -Section, -Tags, -`Sort (Views)` , -Title)
 write.table(politics_300, file="politics-no-text-merged.csv", sep =",", row.names=F)
 
+##POLITICS 900
+politics_s3_text <- read_csv("text-data-nlp-politics.csv")
+politics_s3_text = politics_s3_text[1:901,]
+politics_s3 <- politics[1:901,]
+politics_s3 <- left_join(politics_s3, politics_s3_text, by = "URL")
+added_sent <- read_csv("politics_added_sentiment.csv")
+added_sent = added_sent %>%
+  select(URL, neg1, neg2, neg3, neg4, neg5, pos1, pos2, pos3, pos4, pos5)
+added_sent = added_sent[1:901,]
+politics_s3 <- left_join(politics_s3, added_sent, by = "URL")
+politics_s3_rated <- read_csv("politics_rated_for_s3.csv")
+politics_s3 <- left_join(politics_s3_rated, politics_s3, by ="URL")
+politics_s3 = politics_s3 %>%
+  select( -text, -`Publish date`, -Authors, -Section, -Tags, -`Sort (Views)`)
+politics_s3 = politics_s3 %>%
+  mutate(Other_Social_ref = `Social refs` - (`Fb refs`+`Tw refs`))%>%
+  mutate(Li_ref = as.factor(ifelse(is.na(`Li refs`), 0, 1))) %>% 
+  mutate(Pi_ref = as.factor(ifelse(is.na(`Pi refs`), 0, 1))) %>% 
+  mutate(Other_int = `Social interactions` - (`Fb interactions` + `Tw interactions`)) %>%
+  mutate(Li_int = as.factor(ifelse(is.na(`Li interactions`), 0 , 1))) %>%
+  mutate(Pi_int = as.factor(ifelse(is.na(`Pi interactions`), 0 , 1)))
+
+politics_s3 = politics_s3 %>%
+  select( -`Li refs`, -`Pi refs`, -`Li interactions`, -`Pi interactions`, -ID, -`Social interactions`, -`Social refs`)
+
+NA_find <-as.data.frame(is.na(politics_s3))
+
+politics_s3 <- politics_s3[-c(279, 281, 680, 752, 763, 775),]
+
+dulplicated <- as.data.frame(duplicated(politics_s3) | duplicated(politics_s3, fromLast = TRUE))
+
+politics_s3 <- politics_s3[-c(51, 151, 298, 349, 782, 853),]
 
 ##Cleaning data 
 spaceless <- function(x) {colnames(x) <- gsub(" ", "_", colnames(x));x}
 hless <- function(x) {colnames(x) <- gsub("-", "_", colnames(x));x}
-politics_300 <- spaceless(politics_300)
-politics_300 <- hless(politics_300)
-names(politics_300)
+politics_s3 <- spaceless(politics_s3)
+politics_s3 <- hless(politics_s3)
+names(politics_s3)
+write.table(politics_s3, file="politics-data-for-model.csv", sep = ",", row.names= F)
 #politics_300 <- politics_300 %>%
   #mutate(metric = Social_interactions/Views)
 
 ##Classification Tree of the whole dataset
-tree_p <- tree(as.factor(impact_score) ~., politics_300)
+tree_p <- tree(as.factor(impact) ~. -URL-Title, politics_s3)
 summary(tree_p)
 plot(tree_p)
 text(tree_p, pretty=0)
 	
 #Dividing the data into testing and training
-set.seed(5)
-politics_train <- politics_300 %>%
+politics_s3 <- politics_s3[-441,]
+
+set.seed(1)
+politics_train <- politics_s3 %>%
   sample_frac(0.5)
 
-politics_test <- politics_300%>%
+politics_test <- politics_s3%>%
   setdiff(politics_train)
 
 ##Classication tree
 set.seed(5)
-mp0 <- tree(as.factor(impact_score) ~ ., data=politics_train)
+mp0 <- tree(as.factor(impact) ~ . -URL -Title, data=politics_train)
 summary(mp0)
 plot(mp0)
 text(mp0, pretty = 0)
 mp0_estimates = predict(mp0, politics_test, type = "class")
-table(mp0_estimates, politics_test$impact_score)
-(49+27)/115 ##66% correct predictions 
+table(mp0_estimates, politics_test$impact)
+(178+107)/444 ##64% correct predictions 
+
 
 ##Pruned tree with CV 
 set.seed(5)
@@ -238,220 +271,86 @@ mp2 <- prune.misclass(mp0, best = 5)
 plot(mp2)
 text(mp2, pretty = 0)
 mp2_estimates = predict(mp2, politics_test, type = "class")
-table(mp2_estimates, politics_test$impact_score)
-(56+26)/115 ##71.3% correct predictions
- 
+table(mp2_estimates, politics_test$impact)
+(234+77)/444 ##70% correct predictions
+
 ##Random Forest model 
 set.seed(5)
-mp3 <- randomForest(as.factor(impact_score) ~.,data=politics_train, importance = TRUE, ntree=2000, mtry=5)
+mp3 <- randomForest(as.factor(impact) ~.-URL -Title,data=politics_train, importance = TRUE, ntree=2000, mtry=5)
 varImpPlot(mp3)
 mp3_estimates = predict(mp3, newdata = politics_test, n.trees = 2000) 
-table(mp3_estimates, politics_test$impact_score)
-(60+15)/115 ##65.2% correct predictions
+table(mp3_estimates, politics_test$impact)
+(236+80)/444 ##71.2% correct predictions
+
 
 ##Random Forest model with Conditional inference (uses statistical test rather than purity)
 set.seed(5)
-mp4 <- randomForest(as.factor(impact_score) ~. , data=politics_train, controls=cforest_unbiased(ntree=2000, mtry=5))
+mp4 <- randomForest(as.factor(impact) ~.-URL -Title , data=politics_train, controls=cforest_unbiased(ntree=2000, mtry=5))
 varImpPlot(mp4)
 mp4_estimates = predict(mp4, newdata = politics_test, type = "response") 
-table(mp4_estimates, politics_test$impact_score)
-(61+16)/115 ##67 correct predictions
+table(mp4_estimates, politics_test$impact)
+(238+81)/444 ## 71.8% correct predictions
 
 
 
 ##Boosting with Classification 
-mp5<- gbm(impact_score ~., data = politics_300, distribution = "bernoulli", n.trees = 2000, cv.folds = 5, verbose = F)
+mp5<- gbm(impact ~ . -URL -Title, data = politics_boost_train, distribution = "bernoulli", n.trees = 2000, cv.folds = 5, verbose = F)
 best.iter = gbm.perf(mp5, method = "cv")
 
-politics_boost <- politics_300 %>%
-  mutate(Impact = ifelse(impact_score == 1, "Y", "N" )) %>%
-  select(-impact_score)
-
-mp7 <- gbm(impact_score ~., data = politics_300, distribution = "bernoulli", cv.folds = 5, verbose = F, shrinkage = 0.01, interaction.depth = 1, n.trees = best.iter, n.minobsinnode = 1)
-summary(mp7)
+politics_boost <- politics_s3 %>%
+  mutate(Impact = as.factor(ifelse(impact == 1, "Y", "N" ))) %>%
+  select(-impact)
 
 set.seed(5)
-fitControl = trainControl(method="cv", summaryFunction =  twoClassSummary, classProbs = TRUE, number = 5, returnResamp = "all")
-mp6 <- train(Impact~., data=politics_boost, method="gbm", trControl=fitControl, tuneGrid=data.frame(.n.trees=best.iter, .shrinkage=0.01, .interaction.depth=1, .n.minobsinnode=1), verbose=FALSE,  metric = "ROC", distribution = "bernoulli")
-varImp(mp6)
-
-confusionMatrix(mp6)
-mp6_estimates = predict(mp6, politics_boost)
-confusionMatrix(mp6_estimates, as.factor(politics_boost$Impact))
-postResample(mp6_estimates, as.factor(politics_boost$Impact))
-##Accuracy 0.909, (0.8638, 0.9426)
-
-#####################################################################################################################
-politics_url <- data_10000 %>%
-  filter(Section == "Politics") %>% 
-  select(URL) 
-
-politics_url <- politics_url[1:2500,]
-write.table(politics_url, file="politics-url.csv", sep =",", row.names=F)
-
-Turk <- read_csv("Batch_3145287_batch_results.csv")
-####################################################################################################################
-
-##Filtering by work time
-Turk30<-Turk %>%
-  filter(WorkTimeInSeconds >= 15)
-
-##Cleaning Turk Data
-tidyTurk <- Turk %>% 
-  mutate(y = ifelse(Answer.categories == "category 1", 0, 1)) %>%
-  group_by(Input.URL) %>%
-  summarise(ys = paste(y, collapse = ","))%>%
-  separate(ys, into = c("y1", "y2", "y3"))
-
-
-##Creating dataframe for correlation matrix
-corTurk <- tidyTurk %>%
-  mutate(y1n = as.numeric(y1), y2n = as.numeric(y2), y3n = as.numeric(y3)) %>%
-  select(y1n, y2n, y3n)
-
-##Correlation matrix 
-check <- cor(as.matrix(corTurk), use = "complete.obs")
-check
-check_rank <- rcorr(as.matrix(corTurk))
-check_rank
-
-##Checking for how many articles distinct workers worned on 
-WorkerCheck <- Turk %>%
-  group_by(WorkerId) %>%
-  summarise(N = n())
-
-
-##Rearanging Rows of URL 
-Redo_Turk <- Turk[sample(1:nrow(Turk)), ]
-tidy_redo <- Redo_Turk %>% 
-  mutate(y = ifelse(Answer.categories == "category 1", 0, 1)) %>%
-  group_by(Input.URL) %>%
-  summarise(ys = paste(y, collapse = ","))%>%
-  separate(ys, into = c("y1", "y2", "y3"))
-
-##Creating dataframe for correlation matrix
-corRedo_Turk <- tidy_redo %>%
-  mutate(y1n = as.numeric(y1), y2n = as.numeric(y2), y3n = as.numeric(y3)) %>%
-  select(y1n, y2n, y3n)
-
-##Correlation matrix 
-check <- cor(as.matrix(corRedo_Turk), use = "complete.obs")
-check
-check_rank <- rcorr(as.matrix(corRedo_Turk))
-check_rank
-
-##Creating random values for Ys 
-randomTurk <- data.frame(URL = Turk$Input.URL, yR = sample(0:1, length(Turk$Input.URL), replace = TRUE))
-randomTurk <- randomTurk %>% 
-  group_by(URL) %>%
-  summarise(ys = paste(yR, collapse = ","))%>%
-  separate(ys, into = c("y1", "y2", "y3"))
-
-
-##Creating dataframe for correlation matrix
-corRandomTurk <- randomTurk %>%
-  mutate(y1n = as.numeric(y1), y2n = as.numeric(y2), y3n = as.numeric(y3)) %>%
-  select(y1n, y2n, y3n)
-
-##Correlation matrix 
-check2 <- cor(as.matrix(corRandomTurk), use = "complete.obs")
-check2
-check_rank2 <- rcorr(as.matrix(corRandomTurk))
-check_rank2
-
-###Merging Turk 
-Turk3 <- tidyTurk %>%
-  mutate(all1 = ifelse(y1 == 1 & y2 == 1 & y3 == 1, 1, 0))%>%
-  rename(URL = Input.URL)
-politics_2500_text <- read_csv("text-data-nlp-politics.csv")
-politics_2500_text = politics_2500_text[1:2500,]
-politics_3 <- politics_[1:2500,]
-politics_2500 <- left_join(politics_2500_text, politics_3, by = "URL")
-politics_2500 <- left_join(politics_2500, Turk3, by = "URL")
-added_sent_2500 <- read_csv("politics_added_sentiment.csv")
-added_sent_2500 = added_sent_2500 %>%
-  select(URL, neg1, neg2, neg3, neg4, neg5, pos1, pos2, pos3, pos4, pos5)
-added_sent_2500 = added_sent_2500[1:2500,]
-politics_2500 <- left_join(politics_2500, added_sent_2500, by = "URL")
-write.table(politics_2500, file="politics-2500-merged.csv", sep =",", row.names=F)
-politics_2500 =politics_2500 %>%
-  select(-ID, -URL, -text, -`Publish date`, -Authors, -Section, -Tags, -`Sort (Views)` , -Title, -y1, -y2, -y3)
-politics_2500[is.na(politics_2500)] <- 0
-
-##Cleaning data 
-spaceless <- function(x) {colnames(x) <- gsub(" ", "_", colnames(x));x}
-hless <- function(x) {colnames(x) <- gsub("-", "_", colnames(x));x}
-politics_2500 <- spaceless(politics_2500)
-politics_2500 <- hless(politics_2500)
-names(politics_2500)
-#politics_300 <- politics_300 %>%
-  #mutate(metric = Social_interactions/Views)
-
-##Classification Tree of the whole dataset
-tree_p2 <- tree(as.factor(all1) ~., politics_2500)
-summary(tree_p2)
-plot(tree_p2)
-text(tree_p2, pretty=0)
-
-##Training and Testing dataset
-
-set.seed(5)
-politics_train = politics_2500 %>%
+politics_boost_train <- politics_boost %>% 
   sample_frac(0.5)
 
-politics_test = politics_2500 %>%
-  setdiff(politics_train)
+politics_boost_test <- politics_boost %>% 
+  setdiff(politics_boost_train)
+  
+
+mp7 <- gbm(impact ~ . -URL -Title , data = politics_s3, distribution = "bernoulli", cv.folds = 5, verbose = F, shrinkage = 0.01, interaction.depth = 1, n.trees = best.iter, n.minobsinnode = 1)
+summary(mp7)
 
 
-##Classication tree
-set.seed(5)
-mp21 <- tree(as.factor(all1) ~ . , data=politics_train)
-summary(mp21)
-plot(mp21)
-text(mp21, pretty = 0)
-mp21_estimates = predict(mp21, politics_test, type = "class")
-table(mp21_estimates, politics_test$all1)
-(22+19)/64 ##64.1% correct predictions 
-
-##Pruned tree with CV 
-set.seed(5)
-mp23 <- cv.tree(mp21, FUN = prune.misclass)
-plot(mp23$size, mp23$dev, type = "b")
-mp24 <- prune.misclass(mp21, best = 5)
-plot(mp24)
-text(mp24, pretty = 0)
-mp24_estimates = predict(mp24, politics_test, type = "class")
-table(mp24_estimates, politics_test$all1)
-(22+21)/64 ##67.2% correct predictions
-
-##Random Forest model with Conditional inference (uses statistical test rather than purity)
-set.seed(5)
-mp25 <- randomForest(as.factor(all1) ~. , data=politics_train, controls=cforest_unbiased(ntree=2000, mtry=5))
-varImpPlot(mp25)
-mp25_estimates = predict(mp25, newdata = politics_test, type = "response") 
-table(mp25_estimates, politics_test$all1)
-(61+16)/115 ##67 correct predictions
-
-
-
-##Boosting with Classification 
-mp26<- gbm(all1 ~., data = politics_2500, distribution = "bernoulli", n.trees = 2000, cv.folds = 5, verbose = F)
-best.iter = gbm.perf(mp26, method = "cv")
-
+tune = expand.grid(interaction.depth = c(1, 2, 3),
+                    n.trees = (0:50)*50, 
+                    shrinkage = c(.1 ,.01, .001),
+                    n.minobsinnode = (1:10))
 
 set.seed(5)
 fitControl = trainControl(method="cv", summaryFunction =  twoClassSummary, classProbs = TRUE, number = 5, returnResamp = "all")
-mp6 <- train(Impact~., data=politics_boost, method="gbm", trControl=fitControl, tuneGrid=data.frame(.n.trees=best.iter, .shrinkage=0.01, .interaction.depth=1, .n.minobsinnode=1), verbose=FALSE,  metric = "ROC", distribution = "bernoulli")
+mp6 <- train(Impact~.-URL -Title, data=politics_boost, method="gbm", trControl=fitControl, tuneGrid = tune, verbose=FALSE,  metric = "ROC", distribution = "bernoulli")
+mp6
 varImp(mp6)
 
+
 confusionMatrix(mp6)
+predictions <- predict(object=mp6, politics_boost, type='raw')
 mp6_estimates = predict(mp6, politics_boost)
 confusionMatrix(mp6_estimates, as.factor(politics_boost$Impact))
+confusionMatrix(predictions,  as.factor(politics_boost$Impact))
+##Accuracy 81.8% CI (0.788, 0.841) Kappa #0.589
+postResample(predictions, as.factor(politics_boost$Impact))
 postResample(mp6_estimates, as.factor(politics_boost$Impact))
-##Accuracy 0.909, (0.8638, 0.9426)
 
 
+# probabilites 
+library(pROC)
+predictions <- predict(object=mp6, politics_boost$Impact, type='prob')
+head(predictions)
+
+#AUC socre
+auc = roc(ifelse(politics_boost[,44] == "Y", 1, 0), predictions[[2]])
+print(auc$auc)
+ 
+plot(varImp(mp6), nbars = 10)
+
+save(mp6, file = "boosting.rda")
+save(mp7, file = "boosting2.rda")
 ```
+
+# Erina
 
 # Erina
 
@@ -504,7 +403,6 @@ MK2 <- MK2[c(2,1,3)]
 library(readr)
 library(tidytext)
 library(dplyr)
-library(tidyr)
 library(stringr)
 
 data_EF <- read_csv("Raw data_10000 articles_Jul-Dec 2017.csv") #import original data
@@ -539,14 +437,6 @@ afinn_pos4 <- get_sentiments("afinn") %>%
 afinn_pos5 <- get_sentiments("afinn") %>%
     filter(score == 5)
 
-filter_sentiments <- function(x, ...) {
-  get_sentiments("afinn") %>%
-    filter(score == x)
-}
-
-output <- lapply(-5:5, filter_sentiments) %>%
-  bind_rows()
-
 
 words <- text %>%
 #  group_by(URL) %>%
@@ -560,25 +450,21 @@ neg5 <- words %>%
   inner_join(afinn_neg5) %>%
 	inner_join(output) %>%
 	count(word, sort=TRUE)
-neg5$score <- "-5"
 
 neg4 <- words %>%
   group_by(URL) %>%
 	inner_join(afinn_neg4) %>%
 	count(word, sort=TRUE)
-neg4$score <- "-4"
 
 neg3 <- words %>%
   group_by(URL) %>%
 	inner_join(afinn_neg3) %>%
 	count(word, sort=TRUE)
-neg3$score <- "-3"
 
 neg2 <- words %>%
   group_by(URL) %>%
 	inner_join(afinn_neg2) %>%
 	count(word, sort=TRUE)
-neg2$score <- "-2"
 
 neg1 <- words %>%
   group_by(URL) %>%
@@ -596,128 +482,28 @@ pos1 <- words %>%
   group_by(URL) %>%
 	inner_join(afinn_pos1) %>%
 	count(word, sort=TRUE)
-pos1$score <- "1"
 
 pos2 <- words %>%
   group_by(URL) %>%
 	inner_join(afinn_pos2) %>%
 	count(word, sort=TRUE)
-pos2$score <- "2"
 
 pos3 <- words %>%
   group_by(URL) %>%
 	inner_join(afinn_pos3) %>%
 	count(word, sort=TRUE)
-pos3$score <- "3"
 
 pos4 <- words %>%
   group_by(URL) %>%
 	inner_join(afinn_pos4) %>%
 	count(word, sort=TRUE)
-pos4$score <- "4"
 
 pos5 <- words %>%
   group_by(URL) %>%
 	inner_join(afinn_pos5) %>%
 	count(word, sort=TRUE)
-pos5$score <- "5"
 
-neg5_2 <- neg5 %>%
-  group_by(URL) %>%
-  summarise(n_sum=sum(n))
-neg5_2$score <- "neg5"
-
-neg4_2 <- neg4 %>%
-  group_by(URL) %>%
-  summarise(n_sum=sum(n))
-neg4_2$score <- "neg4"
-
-neg3_2 <- neg3 %>%
-  group_by(URL) %>%
-  summarise(n_sum=sum(n))
-neg3_2$score <- "neg3"
-
-neg2_2 <- neg2 %>%
-  group_by(URL) %>%
-  summarise(n_sum=sum(n))
-neg2_2$score <- "neg2"
-
-neg1_2 <- neg1 %>%
-  group_by(URL) %>%
-  summarise(n_sum=sum(n))
-neg1_2$score <- "neg1"
-
-pos1_2 <- pos1 %>%
-  group_by(URL) %>%
-  summarise(n_sum=sum(n))
-pos1_2$score <- "pos1"
-
-pos2_2 <- pos2 %>%
-  group_by(URL) %>%
-  summarise(n_sum=sum(n))
-pos2_2$score <- "pos2"
-
-pos3_2 <- pos3 %>%
-  group_by(URL) %>%
-  summarise(n_sum=sum(n))
-pos3_2$score <- "pos3"
-
-pos4_2 <- pos4 %>%
-  group_by(URL) %>%
-  summarise(n_sum=sum(n))
-pos4_2$score <- "pos4"
-
-pos5_2 <- pos5 %>%
-  group_by(URL) %>%
-  summarise(n_sum=sum(n))
-pos5_2$score <- "pos5"
-
-# rbindfunc <- function(sentiments,x){
-#   sentiments <- rbind(sentiments,x)
-# return(sentiments)
-# }
-
-#lapply(rbindfunc,rbindfunc(sentiment,c(neg3_2,neg2_2,neg1_2,pos1_2,pos2_2,pos3_2,pos4_2,pos5_2)))
-
-sentiment <- rbind(neg5_2, neg4_2)
-sentiment <- rbind(sentiment, neg3_2)
-sentiment <- rbind(sentiment, neg2_2)
-sentiment <- rbind(sentiment, neg1_2)
-sentiment <- rbind(sentiment, pos1_2)
-sentiment <- rbind(sentiment, pos2_2)
-sentiment <- rbind(sentiment, pos3_2)
-sentiment <- rbind(sentiment, pos4_2)
-sentiment <- rbind(sentiment, pos5_2)
-
-sentiment <- sentiment %>%
-  spread(key=score, value=n_sum)
-
-sentiment[is.na(sentiment)] <- 0
-
-sentiment <- sentiment %>%
-  mutate(total_n = neg5+neg4+neg3+neg2+neg1+pos1+pos2+pos3+pos4+pos5) %>%
-  mutate(neg5=neg5/total_n) %>%
-  mutate(neg4=neg4/total_n) %>%
-  mutate(neg3=neg3/total_n) %>%
-  mutate(neg2=neg2/total_n) %>%
-  mutate(neg1=neg1/total_n) %>%
-  mutate(pos1=pos1/total_n)%>%
-  mutate(pos2=pos2/total_n)%>%
-  mutate(pos3=pos3/total_n)%>%
-  mutate(pos4=pos4/total_n)%>%
-  mutate(pos5=pos5/total_n)
-
-data_added_sentiment <- full_join(data_EF,sentiment,by="URL")
-
-data_added_sentiment <- data_added_sentiment %>%
-  mutate(average_sent = neg5*-5+neg4*-4+neg3*-3+neg2*-2+neg1*-1+pos1*1+pos2*2+pos3*3+pos4*4+pos5*5)
-
-data_added_sentiment <- data_added_sentiment %>%
-  select(-total_n)
-
-
-
-write.csv(data_added_sentiment, file = "C:/Users/choco/Desktop/SPRING 2018/Capstone/data_added_sentiment.csv")
+###at "2.2 Sentiment analysis with inner join"
 ```
 
 
