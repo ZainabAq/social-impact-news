@@ -19,7 +19,7 @@ source("findstats.R")
 # Define UI ----
 ui <- fluidPage(
   
-titlePanel("Is This Article Socially Impactful?"),
+  titlePanel("Is This Article Socially Impactful?"),
   hr(),
   
   fluidRow(
@@ -28,10 +28,10 @@ titlePanel("Is This Article Socially Impactful?"),
     ),
     column(9,
            h5("Title:"),
-           h4(tableOutput("title"))
+           textOutput("title")
     )
-),
-plotOutput("plot"),
+  ),
+  plotOutput("plot"),
   
   hr(),
   h4("Probabilities of Social Impact"),
@@ -57,39 +57,61 @@ plotOutput("plot"),
 ) 
 
 
-  # sidebarLayout(
-  #   
-  #   sidebarPanel(
-  #     textInput("URL1", label = "Enter URL of Article")
-  #     ),
-  #   
-  #   mainPanel(
-  #     
-  #     h5("Title of Article:"),
-  #     tableOutput("title"),
-  #     # h5("Probability of Social Impact based on Social Interactions:"),
-  #     # textOutput("pred1"),
-  #     # h5("Probaility of Social Impact based on SVM Model"),
-  #     # textOutput("pred2")
-  #     h5("Probability of Social Impact based on Optimized Boosting Model"),
-  #     textOutput("boosting2"),
-  #     # h5("Social Impact based on Boosting Model"),
-  #     # textOutput("boosting"),
-  #     h5("Probability of Social Impact based on HuffPost Model"),
-  #     textOutput("huff")
-  #     
-  #   )
-  #   
-  # ))
-  # 
+# sidebarLayout(
+#   
+#   sidebarPanel(
+#     textInput("URL1", label = "Enter URL of Article")
+#     ),
+#   
+#   mainPanel(
+#     
+#     h5("Title of Article:"),
+#     tableOutput("title"),
+#     # h5("Probability of Social Impact based on Social Interactions:"),
+#     # textOutput("pred1"),
+#     # h5("Probaility of Social Impact based on SVM Model"),
+#     # textOutput("pred2")
+#     h5("Probability of Social Impact based on Optimized Boosting Model"),
+#     textOutput("boosting2"),
+#     # h5("Social Impact based on Boosting Model"),
+#     # textOutput("boosting"),
+#     h5("Probability of Social Impact based on HuffPost Model"),
+#     textOutput("huff")
+#     
+#   )
+#   
+# ))
+# 
 
 
 # Define server logic ----
 server <- function(input, output) {
-
   
+  #connect to database  
+  db <- src_mysql(dbname = "social_impact", host="scidb.smith.edu", port=3306, user = "capstone18", password="Stats4ever")
+  
+  Data4Models <- db %>%
+    tbl("PoliticsArticlesFinal") %>%
+    select(- c("URL", "Title"))
+
+ myData <- reactive({   
+   
+    table <- db %>%
+      tbl("PoliticsArticlesFinal") %>%
+      filter(URL == input$URL1)
+
+ })  
+  # output$title <- renderText({
+  #   findtitle(input$URL1)
+  # })
+ 
   output$title <- renderText({
-    findtitle(input$URL1)
+    myDataTitle <- myData() %>%
+      select("Title")
+    
+    myDataTitle <- as.data.frame(myDataTitle)
+    
+    c(t(myDataTitle))
   })
   
   # model1 <- lm(all1 ~ social_interactions, data = data)
@@ -116,8 +138,23 @@ server <- function(input, output) {
   #   modelboostpredict()
   # })
   
+  # output$boosting2 <- renderText({
+  #   findboosting2(input$URL1)
+  # })
+  # 
   output$boosting2 <- renderText({
-    findboosting2(input$URL1)
+    
+    load(file = 'boosting2.rda')
+    
+    pred <- predict(mp7, newdata = myData(), type = "response")
+    
+    myDataBoost <- myData() %>%
+      mutate(predimpact = pred) %>%
+      select(predimpact)
+    
+    myDataBoost <- as.data.frame(myDataBoost)
+
+    c(t(myDataBoost))
   })
   
   # output$boosting <- renderText({
