@@ -312,6 +312,8 @@ library(ROCR)
 library(MKmisc)
 library(survey)
 library(ResourceSelection)
+library(caret)
+library(lattice)
 ```
 
 
@@ -619,23 +621,13 @@ test <- ldata[601:889,]
 m1 <- glm(impact~.,family=binomial(link = "logit"), data=train)
 step(m1,direction="both")
 
-step(m1,
-     scope = list(upper=m1),
-             direction="both",
-             test="Chisq",
-             data=Data)
 
-#m2 <- glm(impact~Avg._minutes_new_vis.+smog_index+pos3+pos4+neg3+pos1+neg2+neg4+pos2+neg5+neg1+total_words+Fb_interactions,family=binomial(link = "logit"), data=train)
 
-m2<-glm(formula = impact ~ Views + Engaged_minutes + New_vis. + Avg._views_new_vis. + 
+m5<-glm(formula = impact ~ Views + Engaged_minutes + New_vis. + Avg._views_new_vis. + 
     Avg._minutes_new_vis. + Desktop_views + Internal_refs + Fb_interactions + 
     smog_index + total_words + neg1 + neg2 + neg3 + neg4 + neg5 + 
     pos1 + pos2 + pos3 + pos4, family = binomial(link = "logit"), 
     data = train)
-
-
-
-#m5 <- glm(impact~ neg1 +neg3 +pos1 +pos2 +smog_index  + neg2 + total_words,family=binomial(link = "logit"), data=train)
 
 summary(m5)
 anova(m5)
@@ -648,19 +640,19 @@ xyplot(fitted.values(m5)/(1-fitted.values(m5))~impact, data=ldata, ylab="odds")
 
 
 
-fitted.results <- predict(m1,newdata=subset(train,select=c(2,3,4,5,6,7,8)),type='response')
-fitted.results <- ifelse(fitted.results > 0.5,1,0)
-misClasificError <- mean(fitted.results != ldata2$impact)
-print(paste('Accuracy',1-misClasificError))
+# fitted.results <- predict(m5,newdata=subset(train,select=c(2,3,4,5,6,7,8)),type='response')
+# fitted.results <- ifelse(fitted.results > 0.5,1,0)
+# misClasificError <- mean(fitted.results != ldata2$impact)
+# print(paste('Accuracy',1-misClasificError))
 
-p <- predict(m5, newdata=subset(test,select=c(2,3,4,5,6,7,8)), type="response")
-pr <- prediction(p, ldata$impact)
-prf <- performance(pr, measure = "tpr", x.measure = "fpr")
-plot(prf)
-
-auc <- performance(pr, measure = "auc")
-auc <- auc@y.values[[1]]
-auc
+# p <- predict(m5, newdata=subset(test,select=c(2,3,4,5,6,7,8)), type="response")
+# pr <- prediction(p, ldata$impact)
+# prf <- performance(pr, measure = "tpr", x.measure = "fpr")
+# plot(prf)
+# 
+# auc <- performance(pr, measure = "auc")
+# auc <- auc@y.values[[1]]
+# auc
 
 # Compute AUC for predicting Class with the model
 prob <- predict(m5, newdata=test, type="response")
@@ -676,14 +668,64 @@ ldata$impact <- as.factor(ldata$impact)
 
 ctrl <- trainControl(method = "repeatedcv", number = 10, savePredictions = TRUE)
 
-mod_fit <- train(impact~ neg1 +neg3 +pos1 +pos2 + Social_interactions +smog_index  + neg2 + total_words,  data=ldata, method="glm", family="binomial",
-                 trControl = ctrl, tuneLength = 5)
+mod_fit <- train(impact ~ Views + Engaged_minutes + New_vis. + Avg._views_new_vis. + Avg._minutes_new_vis. + Desktop_views + Internal_refs + Fb_interactions + smog_index + total_words + neg1 + neg2 + neg3 + neg4 + neg5 + pos1 + pos2 + pos3 + pos4,  data=ldata, method="glm", family="binomial", trControl = ctrl, tuneLength = 5)
 
 
-pred = predict(mod_fit, newdata=test)
+pred <- predict(mod_fit, newdata=test)
 
 cfm1<-confusionMatrix(data=pred, test$impact)
 ```
+
+```{r}
+#Refit model on only those classified as `1` to make up for low sensitivity
+ldata$pred_add <- predict(mod_fit,nedata=ldata)
+
+ldata_1 <- ldata %>%
+  filter(pred_add==1)
+
+#split into train and test
+train <- ldata_1[1:132,]
+test <- ldata_1[133:232,]
+
+m1_1 <- glm(impact~.,family=binomial(link = "logit"), data=train)
+step(m1,direction="both")
+
+m5_1<-glm(formula = impact ~ Views + Engaged_minutes + New_vis. + Avg._views_new_vis. + 
+    Avg._minutes_new_vis. + Desktop_views + Internal_refs + Fb_interactions + 
+    smog_index + total_words + neg1 + neg2 + neg3 + neg4 + neg5 + 
+    pos1 + pos2 + pos3 + pos4, family = binomial(link = "logit"), 
+    data = train)
+
+summary(m5_1)
+anova(m5_1)
+
+
+pR2(m5_1)
+
+xyplot(log(fitted.values(m5_1)/(1-fitted.values(m5_1)))~impact, data=ldata, type=c("l"),ylab="log odds")
+xyplot(fitted.values(m5_1)/(1-fitted.values(m5_1))~impact, data=ldata, ylab="odds")
+
+prob <- predict(m5_1, newdata=test, type="response")
+pred <- prediction(prob, test$impact)
+perf <- performance(pred, measure = "tpr", x.measure = "fpr")
+plot(perf)
+auc <- performance(pred, measure = "auc")
+auc <- auc@y.values[[1]]
+auc
+
+test$impact<-as.factor(test$impact)
+ldata$impact <- as.factor(ldata$impact)
+
+ctrl <- trainControl(method = "repeatedcv", number = 10, savePredictions = TRUE)
+
+mod_fit <- train(impact ~ Views + Engaged_minutes + New_vis. + Avg._views_new_vis. + Avg._minutes_new_vis. + Desktop_views + Internal_refs + Fb_interactions + smog_index + total_words + neg1 + neg2 + neg3 + neg4 + neg5 + pos1 + pos2 + pos3 + pos4,  data=ldata, method="glm", family="binomial", trControl = ctrl, tuneLength = 5)
+
+pred <- predict(mod_fit, newdata=test)
+
+cfm1_1<-confusionMatrix(data=pred, test$impact)
+cfm1_1
+```
+
 
 Social impact:change in way of thinking/attitude or brings someone to take action or change the way they act; leaves an impression or makes the reader think even if it doesn’t change his or her views
 Quality Journalism:accurate, clear, multiple sources, relevance, change in way of thinking/attitude/action (includes above)
