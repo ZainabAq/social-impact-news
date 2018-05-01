@@ -759,10 +759,11 @@ data_added_sentiment2 <- full_join(data_p,sentiment,by="URL")
 
 #Logistic Regression
 ```{r}
-ldata <- read_csv("C:/Users/choco/Desktop/SPRING 2018/Capstone/politics-data-for-model-final2.csv")
+ldata <- read_csv("C:/Users/choco/Desktop/SPRING 2018/Capstone/ADDED_politics-data-for-model-final2.csv")
+
 
 ldata<-ldata %>%
-  select(-URL, -Title,-Impact)
+  select(-URL, -Title,-Impact,-Engaged_minutes,-Returning_vis.,-Search_refs,-Internal_refs,-Other_refs,-Direct_refs,-Fb_refs,-Tw_refs,-Fb_interactions,-total_words)
 
 ldata[is.na(ldata)]<-0
 
@@ -785,15 +786,24 @@ step(m1,direction="both")
 #     pos1 + pos2 + pos3 + pos4, family = binomial(link = "logit"), 
 #     data = train)
 
-m5<-glm(formula = impact ~ Engaged_minutes + Returning_vis. + Avg._views_ret._vis. + 
-    Avg._minutes_ret._vis. + Desktop_views + Mobile_views + Search_refs + 
-    Internal_refs + Other_refs + Direct_refs + Fb_refs + Tw_refs + 
-    Fb_interactions + smog_index + total_words + neg1 + neg2 + 
-    neg3 + neg5 + pos1 + pos2 + pos4 + Li_ref, family = binomial(link = "logit"), 
+# m5<-glm(formula = impact ~ Engaged_minutes + Returning_vis. + Avg._views_ret._vis. + 
+#     Avg._minutes_ret._vis. + Desktop_views + Mobile_views + Search_refs + 
+#     Internal_refs + Other_refs + Direct_refs + Fb_refs + Tw_refs + 
+#     Fb_interactions + smog_index + total_words + neg1 + neg2 + 
+#     neg3 + neg5 + pos1 + pos2 + pos4 + Li_ref, family = binomial(link = "logit"), 
+#     data = train)
+
+m5<-glm(formula = impact ~ Avg._views_ret._vis. + Avg._minutes_ret._vis. + 
+    Desktop_views + Mobile_views + smog_index + neg1 + neg2 + 
+    neg3 + neg5 + pos1 + pos2 + pos4 + Li_ref + Engaged_hours + 
+    Returning_vis_10000 + Search_refs_10000 + Internal_refs_10000 + 
+    Other_refs_10000 + Direct_refs_10000 + Fb_refs_10000 + Tw_refs_10000 + 
+    Fb_interactions_10000 + total_words_10, family = binomial(link = "logit"), 
     data = train)
 
 summary(m5)
 anova(m5)
+odds.ratio(m5)
 
 
 pR2(m5)
@@ -847,11 +857,23 @@ save(m5, file = "C:/Users/choco/Desktop/SPRING 2018/Capstone/logistic_regression
 ```
 
 ```{r}
+
+ldata_1[is.na(ldata_1)]<-0
+a_train <- ldata_1[train_ind, ]
+a_test <- ldata_1[-train_ind, ]
+train_labels <- ldata_1[train_ind, 1]
+test_labels <- ldata_1[-train_ind, 1]
+train_labels[is.na(train_labels)]<-0
+test_labels[is.na(test_labels)]<-0
+test_pred <- knn(train = a_train, test = a_test, cl = train_labels, k=10)
+
+
 #Refit model on only those classified as `1` to make up for low sensitivity
 ldata$pred_add <- predict(mod_fit,nedata=ldata)
 
 ldata_1 <- ldata %>%
-  filter(pred_add==1)
+  filter(pred_add==1) %>%
+  select(-pred_add)
 
 #split into train and test
 train <- ldata_1[1:132,]
@@ -894,6 +916,39 @@ pred <- predict(mod_fit, newdata=test)
 
 cfm1_1<-confusionMatrix(data=pred, test$impact)
 cfm1_1
+```
+
+#Data Cleaning, adding variables for odds ratio
+```{r}
+new <- read_csv("C:/Users/choco/Desktop/SPRING 2018/Capstone/politics-data-for-model-final2 (2).csv")
+
+new <- new %>%
+  mutate(Engaged_hours=Engaged_minutes/60)%>%
+  mutate(Returning_vis_10000=Returning_vis./10000)%>%
+  mutate(Search_refs_10000=Search_refs/10000)%>%
+  mutate(Internal_refs_10000=Internal_refs/10000)%>%
+  mutate(Other_refs_10000=Other_refs/10000)%>%
+  mutate(Direct_refs_10000=Direct_refs/10000)%>%
+  mutate(Fb_refs_10000=Fb_refs/10000)%>%
+  mutate(Tw_refs_10000=Tw_refs/10000)%>%
+  mutate(Fb_interactions_10000=Fb_interactions/10000)%>%
+  mutate(total_words_10=total_words/10)
+
+
+
+write.csv(new,"C:/Users/choco/Desktop/SPRING 2018/Capstone/ADDED_politics-data-for-model-final2.csv",row.names=FALSE)
+  
+
+
+# Search_refs
+# Internal_refs
+# Other_refs
+# Direct_refs
+# Fb_refs
+# Tw_refs
+# Fb_interactions
+# total_words
+
 ```
 
 
