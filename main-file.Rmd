@@ -759,26 +759,37 @@ data_added_sentiment2 <- full_join(data_p,sentiment,by="URL")
 
 #Logistic Regression
 ```{r}
-ldata <- read_csv("C:/Users/choco/Desktop/SPRING 2018/Capstone/politics-data-for-model (2).csv")
+ldata <- read_csv("C:/Users/choco/Desktop/SPRING 2018/Capstone/politics-data-for-model-final2.csv")
 
 ldata<-ldata %>%
-  select(-URL, -Title)
+  select(-URL, -Title,-Impact)
 
 ldata[is.na(ldata)]<-0
 
 #split into train and test
-train <- ldata[1:600,]
-test <- ldata[601:889,]
+
+set.seed(1)
+smp_size <- floor(0.75 * nrow(ldata))
+train_ind <- sample(seq_len(nrow(ldata)), size = smp_size)
+
+train <- ldata[train_ind, ]
+test <- ldata[-train_ind, ]
 
 m1 <- glm(impact~.,family=binomial(link = "logit"), data=train)
 step(m1,direction="both")
 
 
+# m5<-glm(formula = impact ~ Views + Engaged_minutes + New_vis. + Avg._views_new_vis. + 
+#     Avg._minutes_new_vis. + Desktop_views + Internal_refs + Fb_interactions + 
+#     smog_index + total_words + neg1 + neg2 + neg3 + neg4 + neg5 + 
+#     pos1 + pos2 + pos3 + pos4, family = binomial(link = "logit"), 
+#     data = train)
 
-m5<-glm(formula = impact ~ Views + Engaged_minutes + New_vis. + Avg._views_new_vis. + 
-    Avg._minutes_new_vis. + Desktop_views + Internal_refs + Fb_interactions + 
-    smog_index + total_words + neg1 + neg2 + neg3 + neg4 + neg5 + 
-    pos1 + pos2 + pos3 + pos4, family = binomial(link = "logit"), 
+m5<-glm(formula = impact ~ Engaged_minutes + Returning_vis. + Avg._views_ret._vis. + 
+    Avg._minutes_ret._vis. + Desktop_views + Mobile_views + Search_refs + 
+    Internal_refs + Other_refs + Direct_refs + Fb_refs + Tw_refs + 
+    Fb_interactions + smog_index + total_words + neg1 + neg2 + 
+    neg3 + neg5 + pos1 + pos2 + pos4 + Li_ref, family = binomial(link = "logit"), 
     data = train)
 
 summary(m5)
@@ -820,12 +831,19 @@ ldata$impact <- as.factor(ldata$impact)
 
 ctrl <- trainControl(method = "repeatedcv", number = 10, savePredictions = TRUE)
 
-mod_fit <- train(impact ~ Views + Engaged_minutes + New_vis. + Avg._views_new_vis. + Avg._minutes_new_vis. + Desktop_views + Internal_refs + Fb_interactions + smog_index + total_words + neg1 + neg2 + neg3 + neg4 + neg5 + pos1 + pos2 + pos3 + pos4,  data=ldata, method="glm", family="binomial", trControl = ctrl, tuneLength = 5)
+mod_fit <- train(impact ~ Engaged_minutes + Returning_vis. + Avg._views_ret._vis. + 
+    Avg._minutes_ret._vis. + Desktop_views + Mobile_views + Search_refs + 
+    Internal_refs + Other_refs + Direct_refs + Fb_refs + Tw_refs + 
+    Fb_interactions + smog_index + total_words + neg1 + neg2 + 
+    neg3 + neg5 + pos1 + pos2 + pos4 + Li_ref,  data=ldata, method="glm", family="binomial", trControl = ctrl, tuneLength = 5)
 
 
 pred <- predict(mod_fit, newdata=test)
 
-cfm1<-confusionMatrix(data=pred, test$impact)
+cfm1<-confusionMatrix(data=pred, test$impact,positive = "1")
+cfm1
+
+save(m5, file = "C:/Users/choco/Desktop/SPRING 2018/Capstone/logistic_regression_model_s4.rda")
 ```
 
 ```{r}
