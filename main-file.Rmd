@@ -463,6 +463,7 @@ library(survey)
 library(ResourceSelection)
 library(caret)
 library(lattice)
+library(surveyr)
 ```
 
 
@@ -759,7 +760,24 @@ data_added_sentiment2 <- full_join(data_p,sentiment,by="URL")
 
 #Logistic Regression
 ```{r}
-ldata <- read_csv("C:/Users/choco/Desktop/SPRING 2018/Capstone/ADDED_politics-data-for-model-final2.csv")
+library(readr)
+library(tidytext)
+library(dplyr)
+library(tidyr)
+library(stringr)
+library(Amelia)
+library(tidyr)
+library(logistf)
+library(pscl)
+library(ROCR)
+library(MKmisc)
+library(survey)
+library(ResourceSelection)
+library(caret)
+library(lattice)
+library(surveyr)
+
+ldata <- read_csv("C:/Users/choco/Desktop/SPRING 2018/Capstone/FINAL_DATA_FOR_MODELS.csv")
 
 
 ldata<-ldata %>%
@@ -793,13 +811,18 @@ step(m1,direction="both")
 #     neg3 + neg5 + pos1 + pos2 + pos4 + Li_ref, family = binomial(link = "logit"), 
 #     data = train)
 
-m5<-glm(formula = impact ~ Avg._views_ret._vis. + Avg._minutes_ret._vis. + 
-    Desktop_views + Mobile_views + smog_index + neg1 + neg2 + 
-    neg3 + neg5 + pos1 + pos2 + pos4 + Li_ref + Engaged_hours + 
-    Returning_vis_10000 + Search_refs_10000 + Internal_refs_10000 + 
-    Other_refs_10000 + Direct_refs_10000 + Fb_refs_10000 + Tw_refs_10000 + 
-    Fb_interactions_10000 + total_words_10, family = binomial(link = "logit"), 
-    data = train)
+# m5<-glm(formula = impact ~ Avg._views_ret._vis. + Avg._minutes_ret._vis. + 
+#     Desktop_views + Mobile_views + smog_index + neg1 + neg2 + 
+#     neg3 + neg5 + pos1 + pos2 + pos4 + Li_ref + Engaged_hours + 
+#     Returning_vis_10000 + Search_refs_10000 + Internal_refs_10000 + 
+#     Other_refs_10000 + Direct_refs_10000 + Fb_refs_10000 + Tw_refs_10000 + 
+#     Fb_interactions_10000 + total_words_10, family = binomial(link = "logit"), 
+#     data = train)
+
+m5<-glm(formula = impact ~ Avg._views_ret._vis. + Mobile_views + 
+    smog_index + neg1 + neg2 + neg3 + neg5 + pos1 + pos2 + pos4 + 
+    Li_ref + Engaged_hours + Other_refs_10000 + Fb_interactions_10000 + 
+    total_words_10, family = binomial(link = "logit"), data = train)
 
 summary(m5)
 anova(m5)
