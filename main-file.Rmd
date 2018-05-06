@@ -775,7 +775,7 @@ library(survey)
 library(ResourceSelection)
 library(caret)
 library(lattice)
-library(surveyr)
+library(questionr)
 
 ldata <- read_csv("C:/Users/choco/Desktop/SPRING 2018/Capstone/FINAL_DATA_FOR_MODELS.csv")
 
@@ -824,6 +824,8 @@ m5<-glm(formula = impact ~ Avg._views_ret._vis. + Mobile_views +
     Li_ref + Engaged_hours + Other_refs_10000 + Fb_interactions_10000 + 
     total_words_10, family = binomial(link = "logit"), data = train)
 
+save(m5,file="C:/Users/choco/Desktop/SPRING 2018/Capstone/logistic_regression_05062018.rda")
+
 summary(m5)
 anova(m5)
 odds.ratio(m5)
@@ -833,6 +835,7 @@ pR2(m5)
 
 xyplot(log(fitted.values(m5)/(1-fitted.values(m5)))~impact, data=ldata, type=c("l"),ylab="log odds")
 xyplot(fitted.values(m5)/(1-fitted.values(m5))~impact, data=ldata, ylab="odds")
+
 
 
 
@@ -864,11 +867,10 @@ ldata$impact <- as.factor(ldata$impact)
 
 ctrl <- trainControl(method = "repeatedcv", number = 10, savePredictions = TRUE)
 
-mod_fit <- train(impact ~ Engaged_minutes + Returning_vis. + Avg._views_ret._vis. + 
-    Avg._minutes_ret._vis. + Desktop_views + Mobile_views + Search_refs + 
-    Internal_refs + Other_refs + Direct_refs + Fb_refs + Tw_refs + 
-    Fb_interactions + smog_index + total_words + neg1 + neg2 + 
-    neg3 + neg5 + pos1 + pos2 + pos4 + Li_ref,  data=ldata, method="glm", family="binomial", trControl = ctrl, tuneLength = 5)
+mod_fit <- train(impact ~ Avg._views_ret._vis. + Mobile_views + 
+    smog_index + neg1 + neg2 + neg3 + neg5 + pos1 + pos2 + pos4 + 
+    Li_ref + Engaged_hours + Other_refs_10000 + Fb_interactions_10000 + 
+    total_words_10, data=ldata, method="glm", family="binomial", trControl = ctrl, tuneLength = 5)
 
 
 pred <- predict(mod_fit, newdata=test)
