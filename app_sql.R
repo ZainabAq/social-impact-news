@@ -88,7 +88,10 @@ ui <- fluidPage(
 server <- function(input, output) {
   
   #connect to database  
-  db <- src_mysql(dbname = "social_impact", host="scidb.smith.edu", port=3306, user = "capstone18", password="xxx")
+  db <- dplyr::src_mysql(dbname = "social_impact", 
+                         default.file = "~/.my.cnf",
+                         user = NULL, password = NULL,
+                         groups = "client_capstone")
   
   Data4Models <- db %>%
     tbl("PoliticsArticlesFinal") %>%
