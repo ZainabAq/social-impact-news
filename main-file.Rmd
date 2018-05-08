@@ -879,6 +879,12 @@ cfm1<-confusionMatrix(data=pred, test$impact,positive = "1")
 cfm1
 
 save(m5, file = "C:/Users/choco/Desktop/SPRING 2018/Capstone/logistic_regression_model_s4.rda")
+
+
+library(pROC)
+predictions2 <- predict(object=m5, pred, type='prob')
+
+head(predictions2)
 ```
 
 ```{r}
@@ -962,17 +968,6 @@ new <- new %>%
 
 
 write.csv(new,"C:/Users/choco/Desktop/SPRING 2018/Capstone/ADDED_politics-data-for-model-final2.csv",row.names=FALSE)
-  
-
-
-# Search_refs
-# Internal_refs
-# Other_refs
-# Direct_refs
-# Fb_refs
-# Tw_refs
-# Fb_interactions
-# total_words
 
 ```
 
