@@ -1099,5 +1099,64 @@ data_10000 %>%
 python3 parser.py data/politics.csv
 ```
 
+# Final SVM
+```{r}
+data2 <- read_csv("FINAL_DATA_FOR_SQL.csv")
+data2 = data2 %>%
+  select(-Title, -URL, -ImpactBinary)
+
+data2$impact <- as.factor(data2$impact)
+
+set.seed(25)
+sample = sample.split(data$impact, SplitRatio = .60)
+data$impact <- as.factor(data$impact)
+names(data)
+data[,2:42] <- data.frame(lapply(data[,2:42], function(x) scale(x, center = FALSE, scale = max(x, na.rm = TRUE)/100)))
+#data[, 35:42] <- lapply(data[, 35:42], as.factor)
+training_data = subset(data, sample == TRUE)
+testing_data  = subset(data, sample == FALSE)
+
+tc <- tune.control(cross = 15)
+
+gammalist <- c(0.005,0.01,0.015,0.02,0.025,0.03,0.035,0.04,0.045,0.05)
+obj <- tune(svm, impact~., data = train,  metric = "ROC",probability=TRUE, ranges = list(gamma = gammalist, cost = 2^(2:4)), tunecontrol = tune.control(sampling = "fix") )
+
+tune_out = tune(svm, 
+                impact~., 
+                probability=TRUE,
+                metric = "ROC",
+                data = train, 
+                cost = 1,
+                tunecontrol = tc)
+
+bestmod = tune_out$best.model
+summary(bestmod)
+
+bestmod2 = obj$best.model
+
+class_pred = predict(bestmod, train, probability=TRUE)
+prob = attributes(class_pred)
+prob_all = prob[4]
+pred_final = prob_all[[1]][,1]
+
+class_pred = predict(bestmod2, train, probability=TRUE)
+prob = attributes(class_pred)
+prob_all = prob[4]
+pred_final2 = prob_all[[1]][,1]
+
+classification = predict(bestmod, train)
+classification2 = predict(bestmod2, train)
+confusionMatrix(classification, train$impact)
+confusionMatrix(classification2, train$impact)
+
+pred = ROCR::prediction(pred_final, data2$impact)
+pred2 = ROCR::prediction(pred_final2, data2$impact)
+perf = ROCR::performance(pred, 'tpr', 'fpr')
+perf2 = ROCR::performance(pred2, 'tpr', 'fpr')
+#perf_df = data.frame(perf@x.values, perf@y.values)
+require(ROCR)
+plot(perf)
+plot(perf2)
+```
 
 
