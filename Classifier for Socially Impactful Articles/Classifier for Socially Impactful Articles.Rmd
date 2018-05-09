@@ -18,7 +18,7 @@ address:
     address: Statistical & Data Sciences, 1 Chapin Way Northampton, Massachusetts 01063
     
 abstract: |
-  This project aimed to find a way to classify socially impactful articles based on collected and textual data. We created three models (tree, SVM and logistic regression) to have several approaches in identifying socially impactful articles. Afterwards, we created a tool through Shiny to create a friendly user-interface that displays the results of these models plus an average of the three. By doing so, the tool provides four scores. The scores serve as a simple guideline for readers curious to know if an article is socially impactful simply by inputting a URL.
+  Our team used articles from a major Online news publication and tried to create a tool that could automatically classify socially impactful articles from those that are not. Socially impactful articles are those that can change the way readers think, leave an impression on them, or reaffirm their ideas. It could also make readers change their habits or actions based on what they have read. Some variables we analyzed include social media (e.g. Facebook referrals), article readability and sentiment. We trained three models (tree, SVM and logistic regression) to have several approaches in identifying socially impactful articles. We created a tool through Shiny, a web application framework, to create a user-friendly interface that displays the results of these models plus an average of the three. Our tool provides several scores that serve as simple guidelines for readers curious to know the probability of an article being socially impactful or not without reading its contents. It also provides information on the overall strengths and emphasis on each model and what the distribution of variables are. Through this information, users are able to decide for themselves the best model score to use for a particular article. 
   
 author_summary: |
   We are students at Smith College enrolled in the SDS 410 Capstone course in the Statistical & Data Sciences Department.
@@ -30,9 +30,11 @@ csl: plos.csl
 
 # Introduction
 
-Our team used articles from a major Online news publication and tried to create a tool that could automatically classify socially impactful articles from those that are not based on several aspects of the article. These aspects included the article’s presence in social media (e.g. number of likes, shares, etc.), level of readability and the sentiments associated with the words used.
+Our team used articles from a major online news publication and tried to create a tool that could automatically classify socially impactful articles from those that are not based on several aspects of the article. These aspects included the article’s presence in social media (e.g. number of likes, shares, etc.), level of readability and the sentiments associated with the words used.
 
-We define socially impactful articles as those that change the readers’ way of thinking. It can also bring someone to take action or change the way they act. Even if it does not make them change their views, if the article leaves an impression or makes readers think it can also be a socially impactful article as well. Therefore, some impacts that the article can have on readers are changing the way they think, leaving an impression, or reaffirming their ideas. It could also make readers change their habits or actions based on what they have read.
+We define socially impactful articles as those that change the readers’ way of thinking. It can also bring someone to take action or change the way they act. Even if it does not make them change their views, if the article leaves an impression or makes readers think it can also be a socially impactful article as well. Therefore, some impacts that the article can have on readers are changing the way they think, leaving an impression, or reaffirming their ideas. It could also make readers change their habits or actions based on what they have read. These definitions were condensed into a flowchart that was used for future classification (as seen below). 
+
+![](tree.png)
 
 #Pre-existing Data
 The data for this project were provided by the online news source which contained information for their top 10000 most-viewed articles. This news source collects and calculates data on many variables such as page views, returning visitors, and social interactions for each of their articles. The dataset given to us included 33 variables, the majority of which were numeric. To understand these metrics, we referred to the company’s application programming interface (API) which contained a description of 21 metrics. The API can be found at this address: [https://www.parse.ly/help/api/available-metrics/](https://www.parse.ly/help/api/available-metrics/). 
@@ -41,12 +43,17 @@ Other numeric metrics not included in this API were average views for returning 
 
 The final six variables included the URL, title, publish date, author(s), section, and tags. Example of tags are ‘ads_scary’ and 'health_depression'. Some sections include ‘Crime’, ‘Comedy’, ‘Entertainment’, and ‘Politics’.
 
-_Descriptive Statistics._
+Some of these variables were changed for the logistic regression's odds ratio calculation because often the units were too small to interpret the odds. Therefore, `Engaged_minutes` was divided by 60 to create `Engaged_hours`. In addition, `Returning_vis`, `Search_refs`, `Internal_refs`, `Other_refs`, `Direct_refs`, `Fb_refs`, `Tw_refs`, `Fb_interactions` were divided by 10000 (indicated by adding `_10000` after each variable) as wel.
+
+## Descriptive Statistics
 For this entire dataset of 10,000 observations, the average numbers of page views was 105904.9. The average number of social interactions was 12957.97. An average of 77584.06 engaged minutes were spent on each article. The top three sections were Politics (27.94% of articles), Entertainment (18.62 %), and Comedy (4.86%). 
 
-_Subsetting our Data._
-While initially defining social impact, we discovered the difficulty of comparing articles from different sections. For example, an article from the entertainment section would never seem socially impactful when compared to an article from a section like "Black Voices." We decided that this project needed to start with only one section. The section chosen was politics, which had the highest number of articles with 2,794.
+## Subsetting our Data
+While initially defining social impact, we discovered the difficulty of comparing articles from different sections. For example, an article from the entertainment section would never seem socially impactful when compared to an article from a section like "Black Voices." 
 
+Existing literature also indicates that text mining models perform better when they are domain-specific and that it is difficult to compare results across different domains.
+
+We decided that this project needed to start with only one section. The section chosen was politics because it had the highest number of articles which was 2,794.
 
 #Collection of Additional Data
 
@@ -56,21 +63,22 @@ We realized that all of our existing data tell us about the social media reach o
 
 We wrote a Python script that takes in the URL as input and scrapes the webpage to retrieve the text. We used the BeautifulSoup package in Python for this purpose. 
 
-## Incorporating Natural Language Processing Statistics
+# Incorporating Natural Language Processing Statistics
 
 We decided to supplement the social media statistics we got from our client with some basic text mining statistics that give us some information about the text. As discussed earlier, since the task at hand is to judge the impact of the articles, we made the assumption that there would be some relationship between the text itself and the impact it creates. 
 
 We wrote a script in Python for this purpose using the textstat Python package.The script takes as input the text of the articles (obtained from the parser) and outputs the computed statistics. Specifically, we calculate the following five statistics: 
 
-1. word_count: This calculates the number of words in the text.
+1. *word_count: This calculates the number of words in the text.
 2. sentence_count: This calculates the number of sentences in the text.
 3. readability_score: This calculates the Flesch Reading Ease Score which is helpful to access the ease of readability in a document and ranges from 0 to 100 where 0 is difficult to read and 100 is easy to read.
 4. grade_level: This is calculated using the Automated Readability Index which outputs a number that approximates the grade level needed to comprehend the given text. This ranges from 1 to 12. 
 5. smog_index: This calculates the a statistics called Simple Measure of Gobbledygook for the given text. In simple terms, smog index calculates the difficulty level of a sentences based on the number of words that are polysyllabic. It ranges from 5 to 22 which corresponds to the age of the reader who can understand the given text. 
 
+*For the logistic regression's odds ratio calculation, `word_count` was divided by 10 to create the variable, `total_words_10`.
 
 ## Article Classification
-In order to run supervised learning models, data collection was needed to create the training set. Thus, we decided to unitize Amazon Mechanical Turk (MTurk) for data collection to ensure the data was from a random sample. MTurk is a crowdsourcing internet marketplace where “Requesters” create tasks that require human intelligence and “Workers” are paid upon successful completion of each task also known as HITs (Human Intelligence Tasks). 
+In order to run supervised learning models, data collection was needed to create the training set. Thus, we decided to unilize Amazon Mechanical Turk (MTurk) for data collection to ensure the data was from a random sample. MTurk is a crowdsourcing internet marketplace where “Requesters” create tasks that require human intelligence and “Workers” are paid upon successful completion of each task also known as HITs (Human Intelligence Tasks). 
 
 As requesters, we launched tasks that provided a hyperlink to an article and the flow chart that was previously created to help defined classification of socially impactful articles. For each HIT the workers were asked to click the hyperlink to be directed to the article, read the article, and classify the articles after following the given flow chart. We launched 2500 articles and requested 3 iterations of each article. Thus, we had a total of 7500 HITs. Upon data collection, analysis of the 7500 HITs was conducted. Pearson correlation of the three iteration indicated that none of the interactions were even slightly correlated to one another, implying that the results of the classification of the articles were random. Another analysis was conducted to test whether the correlation was statistically significantly different from an actual random imputation of the classification of the articles. The results indicated that the data collected through MTurk was no different from random imputations. 
 
@@ -78,21 +86,20 @@ Following the results of the first MTurk, we launched another set of tasks that 
 
 Finally, the data collection was conducted by our group members going through each articles and classifying the articles ourselves following the flow chart we created. We classified a total of 900 articles and used these 900 articles as the training set.
 
-#Data Cleaning
+#Data Preparation
 
 Once the NLP and sentiment analysis was completed, the original traffic data of each articles and the new NLP and sentiment analysis as well as the social impact classification outcome were complied together. In order to build supervised learning models, only numerical vectors were selected for data analysis. Thus variables such as `Tags`, `Published_Date`, `Author` and the parsed `Text` was removed. However we kept `URL` and `Title` variables, but those were not included in the models. Additionally, six duplicated rows were removed. 
 
-_Missing Data._
+##Missing Data
 There were few missing entries in the traffic data given by our client. Not all of the articles have been shared on every single media platform which created missing entries within our data set. In order to account for missing data of different social references and interaction with social media of the articles, a dummy variable was created that indicated whether the article has been shared in each of the different social media platforms. On the other hand, all the articles have been shared on Facebook and Twitter. Thus two new variables were created that counted the interaction and references on other social media platform than Facebook and Twitter. Lastly, 6 rows have been removed due to missing NLP and sentiment analysis statistics as some articles did not have any text and only included Twitter Threads or videos. 
 
-_Sentiment Analysis._
-We used the `tidytext` package’s `AFINN` lexicon for our sentiment analysis. `AFINN` consists of around 2500 words and phrases scored between -5 to +5. The number between 1 to 5 reflects the severity of the word and the signs imply the positivity of the word. 
+##Sentiment Analysis
+We used the `tidytext` package’s `AFINN` lexicon as an effort to have an idea about what sentiments were present in each article without manually going through each one of them. `AFINN` consists of around 2500 words and phrases scored between -5 to +5. The numbers reflect the severity of the word (e.g. "breathtaking" seems stronger than "relieve" which are positive 5 and 1 words respectively) and the signs imply the positivity of the word.
 
-We scraped the articles of its text, broke up the text into individual words and omitted any commonly used words that should be ignored (e.g. “the”, “and”, “is”) from the text. Then, the text was inspected for words that fell into any of the 10 categories between -5 to +5 (0 was omitted). By using this method, we were able to add a column for -5 to -1 and +1 to +5 and label what percent of all words used in the article (after taking out the stop words) fell into each category of ratings. This was an effort to get an idea of what sentiments were present in the article.
+We scraped the text of the articles, broke it up into individual words and omitted any stop words, which are commonly used words that should be ignored (e.g. “the”, “and”, “is”). Then, the words in `AFINN` were joined with the articles’ words, and the number of words present in the articles with a rating in `AFINN` were totaled. By using this method, we were able to add a column for -5 to -1 and +1 to +5 and label what percent of all words existing in AFFIN (excluding 0-rated words) fell into each category of ratings. For example, the column, `pos1` was created by taking the number of words rated +1 in the text and dividing it by all words with any rating other than 0 in AFINN. Naturally, the higher in rating number (e.g. negative and positive 5), the fewer instances there seemed to be which makes sense, given that those words were more extreme and therefore more likely to choose the occasions in which they appeared in an article.
 
-However, one limitation of this sentiment analysis is the fact that this analysis was only done for one word each. Therefore, words that go together may not be accounted for. In addition, the system is unable to recognize the difference between word-usage depending on the context. For example, if an article was referring to “swift” as a name, the sentiment analysis will not be able to distinguish it from the adjective “swift” which is given a rating of +2. Therefore, the +2 word percentage rate will increase due to the word usage in the text, even though it is not part of the rating.
+However, this sentiment analysis has some limitations. The first is that the text was broken up into individual words. Therefore, words that go together such as “not good” (a negative 2 phrase in AFINN) are not be accounted for because it is split up into “not” and “good”. “Not” does not have a rating in AFINN, and “good” has a rating of positive 3. Thus, in that article, the positive 2 variable have an increase in percentage even though the in reality, negative 2 should have the increase. In addition, the system is unable to take context into consideration. For example, if an article was referring to “swift” as a name (e.g. Taylor Swift), the sentiment analysis will not be able to distinguish it from the adjective “swift” which is given a rating of +2. Therefore, the +2 word percentage rate will increase due to the word usage in the text, even though it should not part of the rating. Given these two limitations, if an article was very short and did not have many words that existed in `AFINN`, there is a possibility that only one word had a rating attached to it. If that is the case, 100% of that article’s sentiment is that one sentiment. If, coincidentally, the word that matched was erroneous such as “not good”, the addition of the sentiment variable is actually misleading and detrimental to our analyses.
 
-Overall, words rated higher on the scale of 1-5 (i.e. +5 and -5) were not as prevalent in the articles, which makes sense given the extremities of the words. The words were more common as the scales became lower (i.e. 1-3).
 
 -other data cleaning (MK?)
 
@@ -102,7 +109,7 @@ Once we had the data cleaned, we uploaded it on the MySQL Server database. Even 
 
 #Models
 
-_Decision Tree._
+##Decision Tree
 Decision trees offer facilitated interpretation that is simple and easy to understand. Decision trees provide comprehensive analysis of each decision and partitions the data accordingly. We chose to use gradient boosting as one of our model because it avoids over fitting. Boosting reduces variance, unlike other decision tree models. Given a baseline model, boosting fits a decision tree to the residuals from the baseline model. Thus, Boosting grows trees sequentially allowing the next tree to be fitted into a function to update their residuals. Since boosting learns information from previous trees, the error rate is also usually lower than other forest models.
 
 Using the `caret` package in R, the gradient boosting model split the data internally and ran its own training and testing models with five cross validation folds. The model also tuned the parameter with five cross validation folds. The optimal tuning parameters with the highest Receiver Operating Characteristics (ROC = 0.807) was 650 trees with shrinkage of 0.01, interaction depth of 3 and 9 minimum number of observations in tree’s terminal nodes. Thus, these parameters were used for the final model. The gradient boosting model had an accuracy of 83.5% and the 95% confidence interval for accuracy was between 80.8% and 85.8%. In addition the model also showed high sensitivity value of 0.918, but a lower specificity value of 0.692. Thus the model was positively classifying impactful articles better than negatively classifying impactful articles. The top 25 most important variables of the boosting model results are shown in Figure X. 
@@ -133,10 +140,16 @@ We found that the ten most significant predictors for the SVM, in order of signi
 10. Negativity score
 
 
-_Logistic Regression. (to be changed due to changes in data + variables/model)_
-We fit a stepwise logistic regression as another measure to determine if an article was socially impactful or not. The model included the sentiment variables of -1 to -3 and +1 to +2, presence in social media (i.e. social interactions), smog index and length of the article (i.e. total number of words). All were significant (p-value < 0.05) and the model had a McFadden’s R-squared of 0.143. In addition, the logistic regression had an area under the curve of 0.820.
+##Logistic Regression. (to be changed due to changes in data + variables/model)
 
-This model was cross-validated, and we noticed that the model had a sensitivity of 0.47 but a specificity of 0.91. Therefore, it does a very good job of classifying non-socially impactful articles but does not perform well in classifying socially impactful articles. We are currently working on first classifying non-socially impactful articles using this logistic regression, then taking the articles classified as “socially impactful” and re-fitting another model for it for better accuracy. We will need to be careful of overfitting, however, and we should proceed with caution.
+We fit a stepwise logistic regression as another way to determine whether an article had social impact. We optimized for AIC and found that `Average views by returning visitors`, `smog-index`, `Sentiments` (i.e. `neg1`, `neg2`, `neg3`, `neg4`, `pos1`, `pos2` and `pos4`), `LinkedIn & other referrals`, `Facebook interactions` and `Length` all had positive coefficients. In other words, a one unit increase in these variables increased the probability that an article would be socially impactful. However, interestingly, `Mobile views` and `Engaged Hours` had negative impact. We cannot say for certain why this may be the case. We suspected that it could be due to certain human behaviors linked to popularity of articles that are not socially impactful (e.g. if a cute cat video is shared on Facebook, it is more likely that someone will be seeing it on a mobile phone instead of a desktop; therefore, one point of further research can be to see if mobile views tends to favor non-socially impactful articles than socially impactful ones.) 
+
+![](odds ratio calculations.png)
+
+From our model, we also calculated the odds ratio for each of our variables. By looking at the numbers in the `OR` column, we can see how the odds of an article being socially impactful changes when a variable is increased by one unit. For example, `Li_ref` is a binary variable indicating whether there is at least one referral from LinkedIn or not. Thus, given that the odds ratio is 1.5, we can say that if there are two identical articles but one has a `Li_ref`=1 and another has `Li_ref`=0, the odds that the article with at least one LinkedIn referral will be socially impactful is 1.5 times that of the other one. As we look through the calculations, there are some interesting variables that stand out. For example, an article with 100% negative 5 sentiment seems to have a very big difference in the odds that it is socially impactful in comparison to an article with 0% negative 5 words, holding all other variables constant. In fact, this can be said for all of the sentiments in this model, although negative 5’s odds ratio seems to be exceptional. This may be the case because negative 5 words included many curse words which are usually used to be offensive and therefore brings about many emotions. Because we defined socially impactful articles as those that could change the way readers think, leave an impression, or reaffirm ideas, stronger negative words could have greater impact than weaker ones when it comes to determining social impact.
+
+Our model had an area under the ROC curve of 0.73. Therefore, although this model can be improved, it has fair performed fairly well. In our cross validation, we found that it had a sensitivity of 0.40 and a sensitivity of 0.90. In other words, the logistic regression model is very good at classifying which articles are _not_ socially impactful but has low accuracy at spotting socially impactful articles. This is an interesting point, especially in comparison to our other models because the other two models have better sensitivity and worse specificity.
+
 
 ## Clustering 
 
@@ -146,6 +159,23 @@ convey important information about the text of the articles but we were curious 
 We used k-means clustering using the nltk package in Python. K-means is a clustering algorithm that classifies a given dataset around a predefined k number of clusters. 
 
 Unfortunately, we found that the optimum number of clusters was 1 which indicates that there were not meaningful distinctions between the group of articles that we rated as socially impactful and the group of articles we rates as not being socially impactful as they were all put in the same cluster. The next optimum number of clusters was 8 but on further investigation, we could not find a significant relationship among the contents of each cluster and the assignment of socially impactful articles to clusters was random. Therefore, we have decided not to include clustering in our final ensemble model. 
+
+## Model comparison
+
+```{r}
+#may want to just replace with a screenshot...
+a<-c("Model", "SVM", "GBM", "Logistic Regression")
+b<- c("Predictor#1 ", "Total words", "Total words", "Average views for returning visitors")
+c<- c("Predictor#2", "Average views for returning visitors", "Views", "Mobile Views")
+d<-c("Predictor#3", "Smog index", "Other interactions", "Smog Index")
+e<-c("Predictor#4", "Internal references", "Tw interactions", "Negative 1")
+f<-c("Predictor#5", "Positive 4", "Fb interactions", "Negative 2")
+g<-c("Predictor#6", "Engaged mins", "Visitors", "Negative 3")
+data.frame(c(a,b,c,d,e,f,g))
+```
+
+Looking across our models, the table above shows how each one looks at different variables and has different strengths. For example, the SVM and GBM are very good at knowing which articles are socially impactful but logistic regression is better at knowing which are not socially impactful. We think that because the models look at different variables, it may be reflecting on what strengths these articles have. For example, the GBM model places an emphasis on `FB interaction` which none of the other models are able to do. Therefore, if an article has an exceptionally high or low number of facebook interactions, its results may be very different from the other articles.
+
 
 ## Shiny App
 
@@ -158,20 +188,28 @@ Three of our models are displayed on the app: the optimized boosting model, supp
 An important aspect of the app’s server is the SQL query. First, the app connects to the database. Within a reactive function from the Shiny package, the politics table is exported, while filtering by the user input URL. In order to query the title, the title column is selected from table created in the initial reactive function, and transformed to a dataframe. From there, this object is transformed into a vector to be displayed on the app by the renderText function from the Shiny package. 
 
 _Predicting in Shiny._
-Within a renderText function, the title and URL columns from the table created in the reactive function are removed. This new table is used within the predict function to predict the probability of social impact from each model
+Within a renderText function, the title and URL columns from the table created in the reactive function are removed. This new table is used within the predict function to predict the probability of social impact from each model. These numbers are then added to vertical lines on the distributions.
 
 _Interface._
-The app contains four rows. The top row contains the title of the app, “Is this Article Socially Impactful?” The row below contains a text input box that prompts the user to enter a URL as well as a location for the title of the corresponds to appear. Below this, a visualization using ggplot2 displays the distributions of probabilities for each of the models. Once an article is entered, vertical lines appear at the probabilities which are predicted by each model. The fourth row displays the probabilities from the three models as well as the average. The probabilities are each a different color that coordinate with the distributions and vertical lines of the visualization. 
+The app contains four rows. The top row contains the title of the app, “Is this Article Socially Impactful?” The row below contains a text input box that prompts the user to enter a URL as well as a location for the title of the corresponds to appear. Below this, a visualization using ggplot2 displays the distributions of probabilities for each of the models. Once an article is entered, vertical lines appear at the probabilities which are predicted by each model. The fourth row displays the probabilities from the three models as well as the average. The probabilities are each a different color that coordinate with the distributions and vertical lines of the visualization. A screenshot of the app is included below in figure 2.  
 
-#Limitations & Topics of Further Discussion
-There were various limitations to this study. Many of these limitations are connected to our method of data collection. Because we rated the 900 articles ourselves, our data is not independent. Additionally, there is a problem with bias in our data. Only four people were classifying, each with similar educational backgrounds and age. This group is not representative of the entire population. For these reasons, the results of this project are not generalizable.
+![](Screen Shot 2018-04-19 at 9.47.35 AM.png)
 
--problems in data collection (bias sampling)
--models
--other limitations
+#Limitations & Further Discussion
 
-#Future Works
--how to address above section
+Many of the variables in our model are connected and have high correlations. For instance, the `social interactions` variable is simply a summation of the facebook, twitter, pinterest, and linkedin interactions. The models may be using variables like these that are connected and causing inefficiencies. 
+
+Our choice to subset our data to only politics articles may also be considered a limitation. Instead of being able to classify any article from our news source, it is only appropriate to use our models to classify Politics articles. Other sections may require different variables to classify articles and our models cannot be generalized to them.
+
+Despite this limitation, our group made the decision that models which classified an article from any section would not be productive. In this case, there would likely be a high number of both type I and II errors. Some, like politics articles for example, may be over-classified as socially impactful whereas others, like comedy articles, may be under-classified. 
+
+#Future Work
+
+In the future, we hope to use other data collection methods to create a training set for our models. Possibly, adjusting our flowchart then utilizing AMT again may be one solution. We could also attempt to find other individuals to classify a number of articles. To solve the issues mentioned in the limitations section, this group would need to be larger and hopefully more representative of the entire population of those who read these articles. 
+
+We also plan on investigating the variables in our model and make determinations of whether they are necessary and if there are any we could exclude to simplify our models. 
+
+We also hope to expand our interface to other sections outside of Politics too.  
 
 # References {#references .unnumbered}
 http://www2.imm.dtu.dk/pubdb/views/publication_details.php?id=6010
