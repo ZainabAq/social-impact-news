@@ -4,10 +4,11 @@
 
 politics_s3 <- read.csv("FINAL_DATA_FOR_SQL.csv")
 
-# db <- src_mysql(dbname = "social_impact", host="scidb.smith.edu", port=3306, user = "capstone18", password="Stats4ever")
+db <- src_mysql(dbname = "social_impact", host="scidb.smith.edu", port=3306, user = "capstone18", password="Stats4ever")
 # 
-# politics_s3 <- db %>%
-#   tbl("FINAL_POLITICS")
+politics_s3 <- db %>%
+  tbl("FINAL_POLITICS") %>%
+  collect(n = Inf)
 
 
 #loading in models
@@ -26,6 +27,7 @@ load(file = 'logistic_regression_FINAL.rda')
 
 #Creating new politics data, where impact is a character vector
 politics_boost <- politics_s3 %>%
+  rename(Impact = ImpactBinary) %>%
   select(-Impact, -impact)
   # mutate(Li_ref = as.factor(Li_ref), Pi_ref = as.factor(Pi_ref), Li_int = as.factor(Li_int), Pi_int = as.factor(Pi_int))
 
