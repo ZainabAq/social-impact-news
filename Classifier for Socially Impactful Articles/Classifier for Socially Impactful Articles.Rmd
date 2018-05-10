@@ -18,7 +18,7 @@ address:
     address: Statistical & Data Sciences, 1 Chapin Way Northampton, Massachusetts 01063
     
 abstract: |
-  Our aim is to create a metric to measure how socially impactful an article is. We used articles from the politics section of a major online news publishing house for this purpose. We define an article to be socially impactful if the topic being discussed is important, if it can change the way readers think, reaffirm their thinking, or leave an impression on them. For our classifier, we used a dataset that contained social media statistics for each article (such as page views, Facebook comments etc.), some basic NLP statistics for the text of the article and sentiment analysis of the text. We manually classified the articles as 0 if they are not socially impactful and 1 if they are. We then trained three models (Gradient Boosting trees, Support Vector Machines, and Logistic Regression) and predicted probabilities for each article. We present our results in a Shiny application with a user-friendly interface that displays the results of our models. The application also provides information on the important predictors for each model and the overall distribution of probabilities. Through this information, users are able to decide for themselves the best model score to use for a particular article. 
+  Our aim is to create a metric to measure how socially impactful an article is. We used articles from the politics section of a major online news publishing house for this purpose. We define an article to be socially impactful if the topic being discussed is important, if it can change the way readers think, reaffirm their thinking, or leave an impression on them. For our classifier, we used a dataset that contained social media statistics and traffic information for each article (such as page views, Facebook comments etc.), some basic NLP statistics for the text of the article, and sentiment analysis of the text. We manually classified the articles as 0 if they are not socially impactful and 1 if they are. We then trained three models (Gradient Boosting Model, Support Vector Machines, and Logistic Regression) and predicted probabilities for each article. We present our results in a Shiny application with a user-friendly interface that displays the results of our models. The application also provides information on the important predictors for each model and the overall distribution of probabilities. Through this information, users are able to decide for themselves the best model score to use for a particular article. 
   
 author_summary: |
   We are students at Smith College enrolled in the SDS 410: Capstone in the Statistical & Data Sciences Department.
@@ -30,7 +30,7 @@ csl: plos.csl
 
 # Introduction
 
-Our team used articles from a major online news publication and tried to create a tool that could automatically classify socially impactful articles from those that are not based on several aspects of the article. These aspects included the article’s presence in social media (e.g. number of likes, shares, etc.), level of readability and the sentiments associated with the words used.
+Our team used articles from a major online news publication and tried to create a tool that could automatically classify socially impactful articles from those that are not based on several aspects of the article. These aspects included the article’s presence in social media (e.g. number of likes, shares, etc.), amount of traffic (e.g page views, engaged minutes, etc.), level of readability and the sentiments associated with the words used.
 
 We define socially impactful articles as those that change the readers’ way of thinking. It can also bring someone to take action or change the way they act. Even if it does not make them change their views, if the article leaves an impression or makes readers think it can also be a socially impactful article as well. Therefore, some impacts that the article can have on readers are changing the way they think, leaving an impression, or reaffirming their ideas. It could also make readers change their habits or actions based on what they have read. These definitions were condensed into a flowchart that was used for future classification (as seen below). 
 
@@ -41,9 +41,7 @@ The data for this project were provided by the online news source which containe
 
 Other numeric metrics not included in this API were average views for returning and new visitors, as well as direct, other, internal, and search referrals. Direct referrals are a count of ...
 
-The final six variables included the URL, title, publish date, author(s), section, and tags. Example of tags are ‘ads_scary’ and 'health_depression'. Some sections include ‘Crime’, ‘Comedy’, ‘Entertainment’, and ‘Politics’.
-
-Some of these variables were changed for the logistic regression's odds ratio calculation because often the units were too small to interpret the odds. Therefore, `Engaged_minutes` was divided by 60 to create `Engaged_hours`. In addition, `Returning_vis`, `Search_refs`, `Internal_refs`, `Other_refs`, `Direct_refs`, `Fb_refs`, `Tw_refs`, `Fb_interactions` were divided by 10000 (indicated by adding `_10000` after each variable) as wel.
+The final six variables(??? what do you mean by fianal 6) included the URL, title, publish date, author(s), section, and tags. Example of tags are ‘ads_scary’ and 'health_depression'. Some sections include ‘Crime’, ‘Comedy’, ‘Entertainment’, and ‘Politics’.
 
 ## Descriptive Statistics
 For this entire dataset of 10,000 observations, the average numbers of page views was 105904.9. The average number of social interactions was 12957.97. An average of 77584.06 engaged minutes were spent on each article. The top three sections were Politics (27.94% of articles), Entertainment (18.62 %), and Comedy (4.86%). 
@@ -59,7 +57,7 @@ We decided that this project needed to start with only one section. The section 
 
 ## Text Mining
 
-We realized that all of our existing data tell us about the social media reach of a given article. However, one of the problems specified by our client was that social media reach is oftentimes not a good indicator of whether the article is socially impactful or not. In order to add another dimension to our data, we decided to retrieve the text of the articles from the URLs that were provided to us in the dataset. 
+We realized that all of our existing data tell us about the the behavioral data of each article (i.e what the reader is actively doing with each article). However, one of the problems specified by our client was that behavioral analysis is oftentimes not a good indicator of whether the article is socially impactful or not. This is because it fails to take the actual content of the articles into account. Thus in order to add another dimension to our data, we decided to retrieve the text of the articles from the URLs that were provided to us in the dataset. 
 
 We wrote a Python script that takes in the URL as input and scrapes the webpage to retrieve the text. We used the BeautifulSoup package in Python for this purpose. 
 
@@ -75,7 +73,6 @@ We wrote a script in Python for this purpose using the textstat Python package.T
 4. grade_level: This is calculated using the Automated Readability Index which outputs a number that approximates the grade level needed to comprehend the given text. This ranges from 1 to 12. 
 5. smog_index: This calculates the a statistics called Simple Measure of Gobbledygook for the given text. In simple terms, smog index calculates the difficulty level of a sentences based on the number of words that are polysyllabic. It ranges from 5 to 22 which corresponds to the age of the reader who can understand the given text. 
 
-*For the logistic regression's odds ratio calculation, `word_count` was divided by 10 to create the variable, `total_words_10`.
 
 
 ### Sentiment Analysis
@@ -92,22 +89,21 @@ As requesters, we launched tasks that provided a hyperlink to an article and the
 
 Following the results of the first MTurk, we launched another set of tasks that provided the parsed text of the article and same flow chart from the previous task. For each HIT the workers were asked to read the parsed text, summarize the text in two to five sentences, and classify the articles after following the given flow chart. This time, we launched 500 articles with 3 iterations of each articles. Thus, we had a total 1500 HITs. The results of the data collection had 97% of the articles rated as socially impactful. The results of the secound MTurk data was not realistic to our understanding of social impact, and would have not been a ideal data for training set (as any classificiation model will predict everything as impactful). Thus, this data was discarded as well. 
 
-Finally, the data collection was conducted by our group members going through each articles and classifying the articles ourselves following the flow chart we created. We classified a total of 1300 articles and used these 1300 articles as the training set.
+Finally, the data collection was conducted by our group members going through each articles and classifying the articles ourselves following the flow chart in Figure 1. We classified a total of 1300 articles and used the 1300 articles as the training set.
 
 # Data Preparation
 
-Once the NLP and sentiment analysis was completed, the original traffic data of each article and the new NLP and sentiment analysis as well as the social impact classification outcome were compiled together. In order to build supervised learning models, only numerical vectors were selected for data analysis. Thus variables such as `Tags`, `Published_Date`, `Author` and the parsed `Text` was removed. However we kept `URL` and `Title` variables, but those were not included in the models. Additionally, six duplicated rows were removed. 
+Once the NLP and sentiment analysis was completed, the original pre-existing data, the new NLP, sentiment analysis, and the social impact classification outcome were compiled together. In order to build supervised learning models, only numerical vectors were selected for data analysis. Thus variables such as `Tags`, `Published_Date`, `Author` and the parsed `Text` was removed. However we kept `URL` and `Title` variables, but those were not included in the models. Additionally, six duplicated rows were removed. 
 
 ## Missing Data
-There were a few missing entries in the traffic data given by our client. Not all of the articles have been shared on every single media platform which created missing entries within our data set. In order to account for missing data of different social references and interaction with social media of the articles, a dummy variable was created that indicated whether the article has been shared in each of the different social media platforms. On the other hand, all the articles have been shared on Facebook and Twitter. Thus two new variables were created that counted the interaction and references on social media platform other than Facebook and Twitter. Additionally, we created new variables that scaled some vectors that had a large range. For example, `Engaged_hours` were created to scale `Engaged_minutes`, all refferals were scaled by 10000, `Returning_vis_1000` was created to scale returning visitors by 1000, and `total_words_10` was created to scale total words by 10. Lastly, 10 rows have been removed due to missing NLP and sentiment analysis statistics as some articles did not have any text and only included Twitter Threads or videos. 
-
+There were a few missing entries in the traffic data given by our client. Not all of the articles have been shared on every single media platform which created missing entries within our data set. In order to account for missing data of different social references and interaction with social media of the articles, a dummy variable was created that indicated whether the article has been shared in each of the different social media platforms. On the other hand, all the articles have been shared on Facebook and Twitter. Thus two new variables were created that counted the interaction and references on social media platform other than Facebook and Twitter. Additionally, we created new variables that scaled some vectors that had a large range to be used for logistic regression's odds ratio calculation, because often the uits were too small to interpret the odds. Therefore, `Engaged_minutes` was divided by 60 to create `Engaged_hours`. In addition, `Returning_vis`, `Search_refs`, `Internal_refs`, `Other_refs`, `Direct_refs`, `Fb_refs`, `Tw_refs`, `Fb_interactions` were divided by 10000 (indicated by adding `_10000` after each variable), and `word_count` was divided by 10 to create the variable, `total_words_10`.
 
 
 ## MySQL database
 Once we had the data cleaned, we uploaded it on a MySQL Server database. Even though we are currently only working with around 2700 articles, we wanted to make sure that our project is scalable. Putting the dataset in a database also unified the schema for our different models. 
 
 
-#Models
+# Models
 
 We used various machine learning models for our classification problem. Our explanatory variables were the social media, NLP, and sentiment statistics whereas our response variable was our classification of the article as 0 or 1.
 
@@ -122,7 +118,7 @@ In the end, we decided to use gradient boosting trees, support vector machines, 
 
 The base line comparison for our models is the null model which has an accuracy of 63%. This is because we classified  37% of the articles as socially impactful so if a model were to guess everything as not being socially impactful, it would be correct 63% of the time. 
 
-##Decision Tree
+## Decision Tree
 
 Decision trees provide comprehensive analysis of each decision and partitions the data accordingly [@MLbook]. We chose to use gradient boosting as one of our model because it avoids over fitting and reduces variance, unlike other decision tree models [@MLbook]. Given a baseline model, boosting fits a decision tree to the residuals from the baseline model [@MLbook]. Then, Boosting grows trees sequentially allowing the next tree to be fitted into a function to update their residuals [@MLbook]. Since boosting learns information from previous trees, the error rate is also usually lower than other forest models [@MLbook]. Additionally, boostig has three tuning parameters: 
 
@@ -156,7 +152,7 @@ knitr::include_graphics("roc-curve.png")
 We found the accuracy of our model to be 79.44%. The sensitivity is 0.92 and the specificity is 0.56. The AUROC value is 0.87.
 
 
-##Logistic Regression. (to be changed due to changes in data + variables/model)
+## Logistic Regression. (to be changed due to changes in data + variables/model)
 
 We fit a stepwise logistic regression as another way to determine whether an article had social impact. We optimized for AIC and found that `Average views by returning visitors`, `smog-index`, `Sentiments` (i.e. `neg1`, `neg2`, `neg3`, `neg4`, `pos1`, `pos2` and `pos4`), `LinkedIn & other referrals`, `Facebook interactions` and `Length` all had positive coefficients. In other words, a one unit increase in these variables increased the probability that an article would be socially impactful. However, interestingly, `Mobile views` and `Engaged Hours` had negative impact. We cannot say for certain why this may be the case. We suspected that it could be due to certain human behaviors linked to popularity of articles that are not socially impactful (e.g. if a cute cat video is shared on Facebook, it is more likely that someone will be seeing it on a mobile phone instead of a desktop; therefore, one point of further research can be to see if mobile views tends to favor non-socially impactful articles than socially impactful ones.) 
 
@@ -222,9 +218,11 @@ The app contains four rows. The top row contains the title of the app, “Is thi
 
 #Limitations & Further Discussion
 
-Many of the variables in our model are connected and have high correlations. For instance, the `social interactions` variable is linearly dependent facebook, twitter, pinterest, and linkedin interactions. The models may be using variables like these that are connected and causing inefficiencies. 
+Many of the variables in our model are connected and have high correlations. For instance, the `Returning_visitors` variable is linearly dependent with average views of returning visitors and averge minutes returning visitors. The models may be using variables like these that are connected and causing inefficiencies. 
 
 Our choice to subset our data to only politics articles may also be considered a limitation. Instead of being able to classify any article from our news source, it is only appropriate to use our models to classify politics articles. Other sections may require different variables to classify articles and our models cannot be generalized to them.
+
+Additionally, the pre-existing data was not randomly collected, nor did the population of repsonse variable random and independent. The problems with data collection could also create biases in our models. 
 
 Despite this limitation, our group made the decision that models which classified an article from any section would not be productive. In this case, there would likely be a high number of both type I and II errors. Some, like politics articles for example, may be over-classified as socially impactful whereas others, like entertainment articles, may be under-classified. 
 
