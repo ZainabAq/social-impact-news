@@ -13,7 +13,7 @@ library(EnvStats)
 library(caret)
 library(mdsr)
 library(RMySQL)
-source("findstats.R")
+source("findstatsSQL.R")
 
 
 # Define UI ----
@@ -28,10 +28,21 @@ ui <- fluidPage(
     ),
     column(9,
            h5("Title:"),
-           textOutput("title")
+           h4(textOutput("title"))
     )
   ),
-  plotOutput("plot"),
+  
+  fluidRow(
+    column(8,
+           plotOutput("plot")
+    ),
+    column(4,
+           tabsetPanel(type = "tabs",
+                       tabPanel("Summary Stats",
+                                br(),
+                                textOutput("totalwords")))
+    )
+  ),
   
   hr(),
   h4("Probabilities of Social Impact"),
@@ -39,15 +50,33 @@ ui <- fluidPage(
   fluidRow(
     column(3,
            h5("Optimized Boosting Model:"),
-           strong(span(textOutput("boosting2"), style="color:red"))
+           strong(span(textOutput("boosting2"), style="color:red")),
+           br(),
+           tags$ul(
+             tags$li("Total Words"), 
+             tags$li("Social Interactions"), 
+             tags$li("Third list item")
+           )
     ),
     column(3,
            h5("Logistic Model:"),
-           strong(span(textOutput("log"), style="color:blue"))
+           strong(span(textOutput("log"), style="color:blue")),
+           br(),
+           tags$ul(
+             tags$li("Total Words"), 
+             tags$li("Social Interactions"), 
+             tags$li("Third list item")
+           )
     ),
     column(3,
            h5("SVM Classification:"),
-           strong(span(textOutput("svm"), style='color:green'))
+           strong(span(textOutput("svm"), style='color:green')),
+           br(),
+           tags$ul(
+             tags$li("Total Words"), 
+             tags$li("Social Interactions"), 
+             tags$li("Third list item")
+           )
     ),
     column(3,
            h5("Our Classification:"),
@@ -88,7 +117,10 @@ ui <- fluidPage(
 server <- function(input, output) {
   
   #connect to database  
-  db <- src_mysql(dbname = "social_impact", host="scidb.smith.edu", port=3306, user = "capstone18", password="Stats4ever")
+  db <- dplyr::src_mysql(dbname = "social_impact", 
+                         default.file = "~/.my.cnf",
+                         user = NULL, password = NULL,
+                         groups = "client_capstone")
   
   Data4Models <- db %>%
     tbl("PoliticsArticlesFinal") %>%
@@ -97,7 +129,7 @@ server <- function(input, output) {
  myData <- reactive({   
    
     table <- db %>%
-      tbl("PoliticsArticlesFinal") %>%
+      tbl("PoliticsAll") %>%
       filter(URL == input$URL1)
 
  })  
@@ -106,6 +138,7 @@ server <- function(input, output) {
   # })
  
   output$title <- renderText({
+    
     myDataTitle <- myData() %>%
       select("Title")
     
@@ -144,9 +177,25 @@ server <- function(input, output) {
   # 
   output$boosting2 <- renderText({
     
-    load(file = 'boosting2.rda')
+    #Can this also be added to the top?
+    load(file = 'boostingFINALFINAL.rda')
     
-    pred <- predict(mp7, newdata = myData(), type = "response")
+    #Can this be moved outside of this renderText to be used for all models?
+    # Data4Models <- myData() %>%
+    #    select("URL", "Title", "Impact_binary")
+    
+    myData <- as.data.frame(myData())
+    
+    myvars <- names(myData %in% c("URL", "Title", "Impact") )
+    Data4Models <- myData[!myvars]
+    
+    #Can this be moved??
+    pred <- predict(mp6, newdata = Data4Models, type = "prob")
+    
+    pred <- pred %>%
+      select(Y)
+    
+    pred <- as.vector(pred$Y)
     
     myDataBoost <- myData() %>%
       mutate(predimpact = pred) %>%
@@ -179,6 +228,19 @@ server <- function(input, output) {
   #Our impact output
   output$ours <- renderText({
     findours(input$URL1)
+  })
+  
+  #########Statistics
+  #total Words
+  output$totalwords <- renderText({
+    mydatatotalwords <- myData() %>%
+      select("Total_words")
+    
+    mydatatotalwords <- as.data.frame(mydatatotalwords)
+    
+    end <- c(t(mydatatotalwords))
+    
+    paste("Total Words:", end)
   })
   
   #Plot

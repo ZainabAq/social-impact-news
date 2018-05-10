@@ -71,18 +71,7 @@ tally(~Section, data_10000)
 politics <- data_10000 %>%
   filter(Section == "Politics")
 write.table(politics, file="politics.csv", sep =",", row.names=F)
-
-#politics_75 <-read_csv("text-data-politics.csv")
-#politics_75 <- politics_75[151:225,]
-#write.table(politics_75, file="politics_75.csv", sep=",",row.names=F)
-####################################################################################################################
-
-#politics_75 <-read_csv("text-data-politics.csv")
-#politics_75 <- politics_75[151:225,]
-#write.table(politics_75, file="politics_75.csv", sep=",",row.names=F)
-
 ###################################################################################################
-
 
 rated_200 <- rated_200 %>%
   mutate(Impact1 = ifelse(Impact == 9, 1, ifelse(Impact == 1, 1, 0)))%>%
@@ -675,6 +664,9 @@ library(ROCR)
 library(MKmisc)
 library(survey)
 library(ResourceSelection)
+library(caret)
+library(lattice)
+library(surveyr)
 ```
 
 
@@ -971,40 +963,75 @@ data_added_sentiment2 <- full_join(data_p,sentiment,by="URL")
 
 #Logistic Regression
 ```{r}
-ldata <- read_csv("C:/Users/choco/Desktop/SPRING 2018/Capstone/politics-data-for-model (2).csv")
+library(readr)
+library(tidytext)
+library(dplyr)
+library(tidyr)
+library(stringr)
+library(Amelia)
+library(tidyr)
+library(logistf)
+library(pscl)
+library(ROCR)
+library(MKmisc)
+library(survey)
+library(ResourceSelection)
+library(caret)
+library(lattice)
+library(questionr)
+
+ldata <- read_csv("C:/Users/choco/Desktop/SPRING 2018/Capstone/FINAL_DATA_FOR_MODELS.csv")
+
 
 ldata<-ldata %>%
-  select(-URL, -Title)
+  select(-URL, -Title,-Impact,-Engaged_minutes,-Returning_vis.,-Search_refs,-Internal_refs,-Other_refs,-Direct_refs,-Fb_refs,-Tw_refs,-Fb_interactions,-total_words)
 
 ldata[is.na(ldata)]<-0
 
 #split into train and test
-train <- ldata[1:600,]
-test <- ldata[601:889,]
+
+set.seed(1)
+smp_size <- floor(0.75 * nrow(ldata))
+train_ind <- sample(seq_len(nrow(ldata)), size = smp_size)
+
+train <- ldata[train_ind, ]
+test <- ldata[-train_ind, ]
 
 m1 <- glm(impact~.,family=binomial(link = "logit"), data=train)
 step(m1,direction="both")
 
-step(m1,
-     scope = list(upper=m1),
-             direction="both",
-             test="Chisq",
-             data=Data)
 
-#m2 <- glm(impact~Avg._minutes_new_vis.+smog_index+pos3+pos4+neg3+pos1+neg2+neg4+pos2+neg5+neg1+total_words+Fb_interactions,family=binomial(link = "logit"), data=train)
+# m5<-glm(formula = impact ~ Views + Engaged_minutes + New_vis. + Avg._views_new_vis. + 
+#     Avg._minutes_new_vis. + Desktop_views + Internal_refs + Fb_interactions + 
+#     smog_index + total_words + neg1 + neg2 + neg3 + neg4 + neg5 + 
+#     pos1 + pos2 + pos3 + pos4, family = binomial(link = "logit"), 
+#     data = train)
 
-m2<-glm(formula = impact ~ Views + Engaged_minutes + New_vis. + Avg._views_new_vis. + 
-    Avg._minutes_new_vis. + Desktop_views + Internal_refs + Fb_interactions + 
-    smog_index + total_words + neg1 + neg2 + neg3 + neg4 + neg5 + 
-    pos1 + pos2 + pos3 + pos4, family = binomial(link = "logit"), 
-    data = train)
+# m5<-glm(formula = impact ~ Engaged_minutes + Returning_vis. + Avg._views_ret._vis. + 
+#     Avg._minutes_ret._vis. + Desktop_views + Mobile_views + Search_refs + 
+#     Internal_refs + Other_refs + Direct_refs + Fb_refs + Tw_refs + 
+#     Fb_interactions + smog_index + total_words + neg1 + neg2 + 
+#     neg3 + neg5 + pos1 + pos2 + pos4 + Li_ref, family = binomial(link = "logit"), 
+#     data = train)
 
+# m5<-glm(formula = impact ~ Avg._views_ret._vis. + Avg._minutes_ret._vis. + 
+#     Desktop_views + Mobile_views + smog_index + neg1 + neg2 + 
+#     neg3 + neg5 + pos1 + pos2 + pos4 + Li_ref + Engaged_hours + 
+#     Returning_vis_10000 + Search_refs_10000 + Internal_refs_10000 + 
+#     Other_refs_10000 + Direct_refs_10000 + Fb_refs_10000 + Tw_refs_10000 + 
+#     Fb_interactions_10000 + total_words_10, family = binomial(link = "logit"), 
+#     data = train)
 
+m5<-glm(formula = impact ~ Avg._views_ret._vis. + Mobile_views + 
+    smog_index + neg1 + neg2 + neg3 + neg5 + pos1 + pos2 + pos4 + 
+    Li_ref + Engaged_hours + Other_refs_10000 + Fb_interactions_10000 + 
+    total_words_10, family = binomial(link = "logit"), data = train)
 
-#m5 <- glm(impact~ neg1 +neg3 +pos1 +pos2 +smog_index  + neg2 + total_words,family=binomial(link = "logit"), data=train)
+save(m5,file="C:/Users/choco/Desktop/SPRING 2018/Capstone/logistic_regression_05062018.rda")
 
 summary(m5)
 anova(m5)
+odds.ratio(m5)
 
 
 pR2(m5)
@@ -1014,19 +1041,20 @@ xyplot(fitted.values(m5)/(1-fitted.values(m5))~impact, data=ldata, ylab="odds")
 
 
 
-fitted.results <- predict(m1,newdata=subset(train,select=c(2,3,4,5,6,7,8)),type='response')
-fitted.results <- ifelse(fitted.results > 0.5,1,0)
-misClasificError <- mean(fitted.results != ldata2$impact)
-print(paste('Accuracy',1-misClasificError))
 
-p <- predict(m5, newdata=subset(test,select=c(2,3,4,5,6,7,8)), type="response")
-pr <- prediction(p, ldata$impact)
-prf <- performance(pr, measure = "tpr", x.measure = "fpr")
-plot(prf)
+# fitted.results <- predict(m5,newdata=subset(train,select=c(2,3,4,5,6,7,8)),type='response')
+# fitted.results <- ifelse(fitted.results > 0.5,1,0)
+# misClasificError <- mean(fitted.results != ldata2$impact)
+# print(paste('Accuracy',1-misClasificError))
 
-auc <- performance(pr, measure = "auc")
-auc <- auc@y.values[[1]]
-auc
+# p <- predict(m5, newdata=subset(test,select=c(2,3,4,5,6,7,8)), type="response")
+# pr <- prediction(p, ldata$impact)
+# prf <- performance(pr, measure = "tpr", x.measure = "fpr")
+# plot(prf)
+# 
+# auc <- performance(pr, measure = "auc")
+# auc <- auc@y.values[[1]]
+# auc
 
 # Compute AUC for predicting Class with the model
 prob <- predict(m5, newdata=test, type="response")
@@ -1042,14 +1070,110 @@ ldata$impact <- as.factor(ldata$impact)
 
 ctrl <- trainControl(method = "repeatedcv", number = 10, savePredictions = TRUE)
 
-mod_fit <- train(impact~ neg1 +neg3 +pos1 +pos2 + Social_interactions +smog_index  + neg2 + total_words,  data=ldata, method="glm", family="binomial",
-                 trControl = ctrl, tuneLength = 5)
+mod_fit <- train(impact ~ Avg._views_ret._vis. + Mobile_views + 
+    smog_index + neg1 + neg2 + neg3 + neg5 + pos1 + pos2 + pos4 + 
+    Li_ref + Engaged_hours + Other_refs_10000 + Fb_interactions_10000 + 
+    total_words_10, data=ldata, method="glm", family="binomial", trControl = ctrl, tuneLength = 5)
 
 
-pred = predict(mod_fit, newdata=test)
+pred <- predict(mod_fit, newdata=test)
 
-cfm1<-confusionMatrix(data=pred, test$impact)
+cfm1<-confusionMatrix(data=pred, test$impact,positive = "1")
+cfm1
+
+save(m5, file = "C:/Users/choco/Desktop/SPRING 2018/Capstone/logistic_regression_model_s4.rda")
+
+
+library(pROC)
+predictions2 <- predict(object=m5, pred, type='prob')
+
+head(predictions2)
 ```
+
+```{r}
+
+ldata_1[is.na(ldata_1)]<-0
+a_train <- ldata_1[train_ind, ]
+a_test <- ldata_1[-train_ind, ]
+train_labels <- ldata_1[train_ind, 1]
+test_labels <- ldata_1[-train_ind, 1]
+train_labels[is.na(train_labels)]<-0
+test_labels[is.na(test_labels)]<-0
+test_pred <- knn(train = a_train, test = a_test, cl = train_labels, k=10)
+
+
+#Refit model on only those classified as `1` to make up for low sensitivity
+ldata$pred_add <- predict(mod_fit,nedata=ldata)
+
+ldata_1 <- ldata %>%
+  filter(pred_add==1) %>%
+  select(-pred_add)
+
+#split into train and test
+train <- ldata_1[1:132,]
+test <- ldata_1[133:232,]
+
+m1_1 <- glm(impact~.,family=binomial(link = "logit"), data=train)
+step(m1,direction="both")
+
+m5_1<-glm(formula = impact ~ Views + Engaged_minutes + New_vis. + Avg._views_new_vis. + 
+    Avg._minutes_new_vis. + Desktop_views + Internal_refs + Fb_interactions + 
+    smog_index + total_words + neg1 + neg2 + neg3 + neg4 + neg5 + 
+    pos1 + pos2 + pos3 + pos4, family = binomial(link = "logit"), 
+    data = train)
+
+summary(m5_1)
+anova(m5_1)
+
+
+pR2(m5_1)
+
+xyplot(log(fitted.values(m5_1)/(1-fitted.values(m5_1)))~impact, data=ldata, type=c("l"),ylab="log odds")
+xyplot(fitted.values(m5_1)/(1-fitted.values(m5_1))~impact, data=ldata, ylab="odds")
+
+prob <- predict(m5_1, newdata=test, type="response")
+pred <- prediction(prob, test$impact)
+perf <- performance(pred, measure = "tpr", x.measure = "fpr")
+plot(perf)
+auc <- performance(pred, measure = "auc")
+auc <- auc@y.values[[1]]
+auc
+
+test$impact<-as.factor(test$impact)
+ldata$impact <- as.factor(ldata$impact)
+
+ctrl <- trainControl(method = "repeatedcv", number = 10, savePredictions = TRUE)
+
+mod_fit <- train(impact ~ Views + Engaged_minutes + New_vis. + Avg._views_new_vis. + Avg._minutes_new_vis. + Desktop_views + Internal_refs + Fb_interactions + smog_index + total_words + neg1 + neg2 + neg3 + neg4 + neg5 + pos1 + pos2 + pos3 + pos4,  data=ldata, method="glm", family="binomial", trControl = ctrl, tuneLength = 5)
+
+pred <- predict(mod_fit, newdata=test)
+
+cfm1_1<-confusionMatrix(data=pred, test$impact)
+cfm1_1
+```
+
+#Data Cleaning, adding variables for odds ratio
+```{r}
+new <- read_csv("C:/Users/choco/Desktop/SPRING 2018/Capstone/politics-data-for-model-final2 (2).csv")
+
+new <- new %>%
+  mutate(Engaged_hours=Engaged_minutes/60)%>%
+  mutate(Returning_vis_10000=Returning_vis./10000)%>%
+  mutate(Search_refs_10000=Search_refs/10000)%>%
+  mutate(Internal_refs_10000=Internal_refs/10000)%>%
+  mutate(Other_refs_10000=Other_refs/10000)%>%
+  mutate(Direct_refs_10000=Direct_refs/10000)%>%
+  mutate(Fb_refs_10000=Fb_refs/10000)%>%
+  mutate(Tw_refs_10000=Tw_refs/10000)%>%
+  mutate(Fb_interactions_10000=Fb_interactions/10000)%>%
+  mutate(total_words_10=total_words/10)
+
+
+
+write.csv(new,"C:/Users/choco/Desktop/SPRING 2018/Capstone/ADDED_politics-data-for-model-final2.csv",row.names=FALSE)
+
+```
+
 
 Social impact:change in way of thinking/attitude or brings someone to take action or change the way they act; leaves an impression or makes the reader think even if it doesn’t change his or her views
 Quality Journalism:accurate, clear, multiple sources, relevance, change in way of thinking/attitude/action (includes above)
@@ -1330,5 +1454,138 @@ data_10000 %>%
 python3 parser.py data/politics.csv
 ```
 
+# Final SVM
+```{r}
+data2 <- read_csv("FINAL_DATA_FOR_SQL.csv")
+data2 = data2 %>%
+  select(-Title, -URL, -ImpactBinary)
 
+data2$impact <- as.factor(data2$impact)
+
+set.seed(25)
+sample = sample.split(data$impact, SplitRatio = .60)
+data$impact <- as.factor(data$impact)
+names(data)
+data[,2:42] <- data.frame(lapply(data[,2:42], function(x) scale(x, center = FALSE, scale = max(x, na.rm = TRUE)/100)))
+#data[, 35:42] <- lapply(data[, 35:42], as.factor)
+training_data = subset(data, sample == TRUE)
+testing_data  = subset(data, sample == FALSE)
+
+tc <- tune.control(cross = 15)
+
+gammalist <- c(0.005,0.01,0.015,0.02,0.025,0.03,0.035,0.04,0.045,0.05)
+obj <- tune(svm, impact~., data = train,  metric = "ROC",probability=TRUE, ranges = list(gamma = gammalist, cost = 2^(2:4)), tunecontrol = tune.control(sampling = "fix") )
+
+tune_out = tune(svm, 
+                impact~., 
+                probability=TRUE,
+                metric = "ROC",
+                data = train, 
+                cost = 1,
+                tunecontrol = tc)
+
+bestmod = tune_out$best.model
+summary(bestmod)
+
+bestmod2 = obj$best.model
+
+class_pred = predict(bestmod, train, probability=TRUE)
+prob = attributes(class_pred)
+prob_all = prob[4]
+pred_final = prob_all[[1]][,1]
+
+class_pred = predict(bestmod2, train, probability=TRUE)
+prob = attributes(class_pred)
+prob_all = prob[4]
+pred_final2 = prob_all[[1]][,1]
+
+classification = predict(bestmod, train)
+classification2 = predict(bestmod2, train)
+confusionMatrix(classification, train$impact)
+confusionMatrix(classification2, train$impact)
+
+pred = ROCR::prediction(pred_final, data2$impact)
+pred2 = ROCR::prediction(pred_final2, data2$impact)
+perf = ROCR::performance(pred, 'tpr', 'fpr')
+perf2 = ROCR::performance(pred2, 'tpr', 'fpr')
+#perf_df = data.frame(perf@x.values, perf@y.values)
+require(ROCR)
+plot(perf)
+plot(perf2)
+
+# finding most important predictors
+w <- t(bestmod2$coefs) %*% bestmod2$SV                 # weight vectors
+w <- apply(w, 2, function(v){sqrt(sum(v^2))})  # weight
+w <- sort(w, decreasing = T)
+print(w)
+
+# finding prediction vector
+
+#testing_data$impact = as.factor(testing_data$impact)
+class_pred = predict(bestmod, testing_data, probability=TRUE)
+
+#class_pred_train = predict(bestmod, training_data)
+table(predicted = class_pred, true = testing_data$impact)
+
+class_pred<- as.numeric(class_pred)
+#class_pred_train <- as.numeric(class_pred_train)
+testing_data$impact <- as.numeric(testing_data$impact)
+#training_data$impact <- as.numeric(training_data$impact)
+rmse(class_pred, testing_data$impact)
+#rmse(class_pred_train, training_data$impact)
+```
+
+# Trying a bunch of different models and looking at kapps
+```{r}
+# prepare training scheme
+control <- trainControl(method="repeatedcv", number=10, repeats=3)
+# CART
+set.seed(7)
+fit.cart <- train(impact~., data=training_data, method="rpart", trControl=control)
+# SVM
+set.seed(7)
+fit.svm <- train(impact~., data=training_data, method="svmRadial", trControl=control)
+# kNN
+set.seed(7)
+fit.knn <- train(impact~., data=training_data, method="knn", trControl=control)
+# Random Forest
+set.seed(7)
+fit.rf <- train(impact~., data=training_data, method="rf", trControl=control)
+# train SVM radial sigma
+fit.svmR <- train(impact~., data=training_data, method="svmRadialSigma", trControl=control)
+# collect resamples
+results <- resamples(list(CART=fit.cart, SVM=fit.svm, KNN=fit.knn, RF=fit.rf, svmR=fit.svmR))
+
+summary(results)
+# boxplots of results
+bwplot(results)
+# dot plots of results
+dotplot(results)
+
+cart.pred=predict(fit.cart, testing_data)
+table(predicted = cart.pred, true = testing_data$impact)
+cart.pred<- as.numeric(cart.pred)
+testing_data$impact <-as.numeric(testing_data$impact)
+rmse(cart.pred, testing_data$impact)
+
+svm.pred=predict(fit.svm, testing_data)
+table(predicted = svm.pred, true = testing_data$impact)
+svm.pred<- as.numeric(svm.pred)
+rmse(svm.pred, testing_data$impact)
+
+knn.pred=predict(fit.knn, testing_data)
+table(predicted = knn.pred, true = testing_data$impact)
+knn.pred<- as.numeric(knn.pred)
+rmse(knn.pred, testing_data$impact)
+
+rf.pred=predict(fit.rf, testing_data)
+table(predicted = rf.pred, true = testing_data$impact)
+rf.pred<- as.numeric(rf.pred)
+rmse(rf.pred, testing_data$impact)
+
+svmR.pred=predict(fit.svmR, testing_data)
+table(predicted = svmR.pred, true = testing_data$impact)
+svmR.pred<- as.numeric(svmR.pred)
+rmse(svmR.pred, testing_data$impact)
+```
 
