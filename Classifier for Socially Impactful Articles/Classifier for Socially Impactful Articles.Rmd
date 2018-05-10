@@ -182,18 +182,6 @@ Unfortunately, we found that the optimum number of clusters was 1 which indicate
 knitr::include_graphics("model-comp-II.png")
 ```
 
-```{r}
-#may want to just replace with a screenshot...
-a<-c("Model", "SVM", "GBM", "Logistic Regression")
-b<- c("Predictor#1 ", "Total words", "Total words", "Average views for returning visitors")
-c<- c("Predictor#2", "Average views for returning visitors", "Views", "Mobile Views")
-d<-c("Predictor#3", "Smog index", "Other interactions", "Smog Index")
-e<-c("Predictor#4", "Internal references", "Tw interactions", "Negative 1")
-f<-c("Predictor#5", "Positive 4", "Fb interactions", "Negative 2")
-g<-c("Predictor#6", "Engaged mins", "Visitors", "Negative 3")
-data.frame(c(a,b,c,d,e,f,g))
-```
-
 Looking across our models, the table above shows how each one looks at different variables and has different strengths. For example, the SVM and GBM are very good at knowing which articles are socially impactful but logistic regression is better at knowing which are not socially impactful. We think that because the models look at different variables, it may be reflecting on what strengths these articles have. For example, the GBM model places an emphasis on `FB interaction` which none of the other models are able to do. Therefore, if an article has an exceptionally high or low number of facebook interactions, its results may be very different from the other articles.
 
 We also looked at specificity, sensitivity, accuracy and AUROC values. 
@@ -242,5 +230,3 @@ We would also like to explore other models.
 
 # References {#references .unnumbered}
 http://www2.imm.dtu.dk/pubdb/views/publication_details.php?id=6010
-
-Trying to make a commit.
