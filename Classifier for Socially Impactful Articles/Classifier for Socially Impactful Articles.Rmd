@@ -135,6 +135,10 @@ Our main motivation for using Support Vector Machines to classify the articles w
 
 A kernel is a compact representation of the similarity in the dataset. Since we are working with multidimensional data, we tried linear, polynomial, sigmoid and radial kernels to see which one gave us the highest accuracy.After cross-validation and tuning, we found that a radial kernel performs best on our data with a low cost and high gamma value.
 
+```{r, out.width = "400px", echo=FALSE}
+knitr::include_graphics("roc-curve.png")
+```
+
 We found the accuracy of our model to be 79.44%. The sensitivity is 0.92 and the specificity is 0.56. The AUROC value is 0.87.
 
 
@@ -159,6 +163,10 @@ We used k-means clustering using the nltk package in Python. K-means is a cluste
 Unfortunately, we found that the optimum number of clusters was 1 which indicates that there were not meaningful distinctions between the group of articles that we rated as socially impactful and the group of articles we rates as not being socially impactful as they were all put in the same cluster. The next optimum number of clusters was 8 but on further investigation, we could not find a significant relationship among the contents of each cluster and the assignment of socially impactful articles to clusters was random. Therefore, we have decided not to include clustering in our final ensemble model. 
 
 ## Model comparison
+
+```{r, out.width = "400px", echo=FALSE}
+knitr::include_graphics("model-comp-II.png")
+```
 
 ```{r}
 #may want to just replace with a screenshot...
@@ -193,18 +201,18 @@ An important aspect of the app’s server is the SQL query. First, the app conne
 _Predicting in Shiny._
 Within a renderText function, the title and URL columns from the table created in the reactive function are removed. This new table is used within the predict function to predict the probability of social impact from each model. These numbers are then added to vertical lines on the distributions.
 
-_Interface._
+#Interface
 The app contains four rows. The top row contains the title of the app, “Is this Article Socially Impactful?” The row below contains a text input box that prompts the user to enter a URL as well as a location for the title of the corresponds to appear. Below this, a visualization using ggplot2 displays the distributions of probabilities for each of the models. Once an article is entered, vertical lines appear at the probabilities which are predicted by each model. The fourth row displays the probabilities from the three models as well as the average. The probabilities are each a different color that coordinate with the distributions and vertical lines of the visualization. A screenshot of the app is included below in figure 2.  
 
 ![](Screen Shot 2018-04-19 at 9.47.35 AM.png)
 
 #Limitations & Further Discussion
 
-Many of the variables in our model are connected and have high correlations. For instance, the `social interactions` variable is simply a summation of the facebook, twitter, pinterest, and linkedin interactions. The models may be using variables like these that are connected and causing inefficiencies. 
+Many of the variables in our model are connected and have high correlations. For instance, the `social interactions` variable is linearly dependent facebook, twitter, pinterest, and linkedin interactions. The models may be using variables like these that are connected and causing inefficiencies. 
 
-Our choice to subset our data to only politics articles may also be considered a limitation. Instead of being able to classify any article from our news source, it is only appropriate to use our models to classify Politics articles. Other sections may require different variables to classify articles and our models cannot be generalized to them.
+Our choice to subset our data to only politics articles may also be considered a limitation. Instead of being able to classify any article from our news source, it is only appropriate to use our models to classify politics articles. Other sections may require different variables to classify articles and our models cannot be generalized to them.
 
-Despite this limitation, our group made the decision that models which classified an article from any section would not be productive. In this case, there would likely be a high number of both type I and II errors. Some, like politics articles for example, may be over-classified as socially impactful whereas others, like comedy articles, may be under-classified. 
+Despite this limitation, our group made the decision that models which classified an article from any section would not be productive. In this case, there would likely be a high number of both type I and II errors. Some, like politics articles for example, may be over-classified as socially impactful whereas others, like entertainment articles, may be under-classified. 
 
 #Future Work
 
@@ -212,7 +220,7 @@ In the future, we hope to use other data collection methods to create a training
 
 We also plan on investigating the variables in our model and make determinations of whether they are necessary and if there are any we could exclude to simplify our models. 
 
-We also hope to expand our interface to other sections outside of Politics too.  
+We also hope to expand our interface to other sections outside of politics too.  
 
 # References {#references .unnumbered}
 http://www2.imm.dtu.dk/pubdb/views/publication_details.php?id=6010
