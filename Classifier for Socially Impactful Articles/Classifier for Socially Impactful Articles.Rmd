@@ -34,7 +34,7 @@ Our team used articles from a major online news publication and tried to create 
 
 We define socially impactful articles as those that change the readers’ way of thinking. It can also bring someone to take action or change the way they act. Even if it does not make them change their views, if the article leaves an impression or makes readers think it can also be a socially impactful article as well. Therefore, some impacts that the article can have on readers are changing the way they think, leaving an impression, or reaffirming their ideas. It could also make readers change their habits or actions based on what they have read. These definitions were condensed into a flowchart that was used for future classification (as seen below). 
 
-![](tree.png)
+![Figure 1: social impact definition flow chart](tree.png)
 
 #Pre-existing Data
 The data for this project were provided by the online news source which contained information for their top 10000 most-viewed articles. This news source collects and calculates data on many variables such as page views, returning visitors, and social interactions for each of their articles. The dataset given to us included 33 variables, the majority of which were numeric. To understand these metrics, we referred to the company’s application programming interface (API) which contained a description of 21 metrics. The API can be found at this address: [https://www.parse.ly/help/api/available-metrics/](https://www.parse.ly/help/api/available-metrics/). 
@@ -124,9 +124,22 @@ The base line comparison for our models is the null model which has an accuracy 
 
 ##Decision Tree
 
-Decision trees provide comprehensive analysis of each decision and partitions the data accordingly. We chose to use gradient boosting as one of our model because it avoids over fitting. Boosting reduces variance, unlike other decision tree models. Given a baseline model, boosting fits a decision tree to the residuals from the baseline model. Thus, Boosting grows trees sequentially allowing the next tree to be fitted into a function to update their residuals. Since boosting learns information from previous trees, the error rate is also usually lower than other forest models.
+Decision trees provide comprehensive analysis of each decision and partitions the data accordingly [@MLbook]. We chose to use gradient boosting as one of our model because it avoids over fitting and reduces variance, unlike other decision tree models [@MLbook]. Given a baseline model, boosting fits a decision tree to the residuals from the baseline model [@MLbook]. Then, Boosting grows trees sequentially allowing the next tree to be fitted into a function to update their residuals [@MLbook]. Since boosting learns information from previous trees, the error rate is also usually lower than other forest models [@MLbook]. Additionally, boostig has three tuning parameters: 
 
-Using the `caret` package in R, the gradient boosting model split the data internally and ran its own training and testing models with five cross validation folds. The model also tuned the parameter with five cross validation folds. The optimal tuning parameters with the highest Receiver Operating Characteristics (ROC = 0.807) was 650 trees with shrinkage of 0.01, interaction depth of 3 and 9 minimum number of observations in tree’s terminal nodes. Thus, these parameters were used for the final model. The gradient boosting model had an accuracy of 83.5% and the 95% confidence interval for accuracy was between 80.8% and 85.8%. In addition the model also showed high sensitivity value of 0.918, but a lower specificity value of 0.692. Thus the model was positively classifying impactful articles better than negatively classifying impactful articles. The top 25 most important variables of the boosting model results are shown in Figure X. 
+* The number of trees: total number of trees that will be grown  [@MLbook].
+* The shrinage parameter: The rate at which boosting learns  [@MLbook].
+* Number of splits in each tree: controls the complexity of the model  [@MLbook]. 
+
+Using the `caret` package in R [@Kuhn09thecaret], the gradient boosting model split the data internally and ran its own training and testing models with five cross validation folds. The model also tuned the parameter with five cross validation folds. The optimal tuning parameters with the highest Receiver Operating Characteristics (ROC = 0.792) was 900 trees with shrinkage of 0.01, number of splits of 3. The `gbm` in the caret package offers another parameter that measures the minimum number of observations in tree’s terminal nodes. The optimal tuining parameter for the minimum number of observervation in the terminal node was 8. Thus, these parameters were used for the final model. The gradient boosting model had an accuracy of 82.5% and the 95% confidence interval for accuracy was between 80% and 84.5%. In addition the model also showed high sensitivity value of 0.901, but a lower specificity value of 0.609. The ROC curve is shown in Figure 2. Thus the model was positively classifying impactful articles better than negatively classifying impactful articles. The top 25 most important variables of the boosting model results are shown in Figure 3. 
+
+![Figure 2: ROC curve of Gradient Boosting model](roc_gbm.png)
+
+![Figure 3: Variable Importance of boostig model](boost_VarImp.png)
+
+
+Lastly, we created a classification tree using the top 20 variables selected from the boosting tree using `rpart` package in R [@rpart], shown in figure 4. 
+
+![Figure 4: Classification tree using top 20 variables selected from GBM](classification tree.png)
 
 ## Support Vector Machines
 
