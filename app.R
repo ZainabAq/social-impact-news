@@ -164,12 +164,21 @@ fluidRow(
 # Define server logic ----
 server <- function(input, output) {
   
+  db <- src_mysql(dbname = "social_impact", host="scidb.smith.edu", port=3306, user = "capstone18", password="Stats4ever")
+  # 
+  the_article <- db %>%
+    tbl("FINAL_POLITICS") %>%
+    filter(URL == input$URL1) %>%
+    collect(n = Inf)
+  
   output$title <- renderText({
     findvar(input$URL1, "Title")
+    pull(the_article, "Title")
   })
   
   output$boosting <- renderText({
     findvar(input$URL1, "predboosting")
+    predict(mpf6, newdata = input)
   })
   
   #Huffstat output
