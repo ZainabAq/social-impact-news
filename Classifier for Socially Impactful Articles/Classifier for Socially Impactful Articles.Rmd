@@ -53,15 +53,17 @@ Existing literature also indicates that text mining models perform better when t
 
 We decided that this project needed to start with only one section. The section chosen was politics because it had the highest number of articles which was 2,794.
 
-#Collection of Additional Data
+# Data
 
-## Text Mining
+## Collection of Additional Data
+
+### Text Mining
 
 We realized that all of our existing data tell us about the the behavioral data of each article (i.e what the reader is actively doing with each article). However, one of the problems specified by our client was that behavioral analysis is oftentimes not a good indicator of whether the article is socially impactful or not. This is because it fails to take the actual content of the articles into account. Thus in order to add another dimension to our data, we decided to retrieve the text of the articles from the URLs that were provided to us in the dataset. 
 
 We wrote a Python script that takes in the URL as input and scrapes the webpage to retrieve the text. We used the BeautifulSoup package in Python for this purpose. 
 
-### Incorporating Natural Language Processing Statistics
+#### Incorporating Natural Language Processing Statistics
 
 We decided to supplement the social media statistics we got from our client with some basic text mining statistics that give us some information about the text. As discussed earlier, since the task at hand is to judge the impact of the articles, we made the assumption that there would be some relationship between the text itself and the impact it creates. 
 
@@ -75,7 +77,7 @@ We wrote a script in Python for this purpose using the textstat Python package.T
 
 
 
-### Sentiment Analysis
+#### Sentiment Analysis
 We used the `tidytext` package’s `AFINN` lexicon as an effort to have an idea about what sentiments were present in each article without manually going through each one of them. `AFINN` consists of around 2500 words and phrases scored between -5 to +5. The numbers reflect the severity of the word (e.g. "breathtaking" seems stronger than "relieve" which are positive 5 and 1 words respectively) and the signs imply the positivity of the word.
 
 We scraped the text of the articles, broke it up into individual words and omitted any stop words, which are commonly used words that should be ignored (e.g. “the”, “and”, “is”). Then, the words in `AFINN` were joined with the articles’ words, and the number of words present in the articles with a rating in `AFINN` were totaled. By using this method, we were able to add a column for -5 to -1 and +1 to +5 and label what percent of all words existing in AFFIN (excluding 0-rated words) fell into each category of ratings. For example, the column, `pos1` was created by taking the number of words rated +1 in the text and dividing it by all words with any rating other than 0 in AFINN. Naturally, the higher in rating number (e.g. negative and positive 5), the fewer instances there seemed to be which makes sense, given that those words were more extreme and therefore more likely to choose the occasions in which they appeared in an article.
@@ -91,7 +93,7 @@ Following the results of the first MTurk, we launched another set of tasks that 
 
 Finally, the data collection was conducted by our group members going through each articles and classifying the articles ourselves following the flow chart in Figure 1. We classified a total of 1300 articles and used the 1300 articles as the training set.
 
-# Data Preparation
+## Data Preparation
 
 Once the NLP and sentiment analysis was completed, the original pre-existing data, the new NLP, sentiment analysis, and the social impact classification outcome were compiled together. In order to build supervised learning models, only numerical vectors were selected for data analysis. Thus variables such as `Tags`, `Published_Date`, `Author` and the parsed `Text` was removed. However we kept `URL` and `Title` variables, but those were not included in the models. Additionally, six duplicated rows were removed. 
 
@@ -172,6 +174,8 @@ We used k-means clustering using the nltk package in Python. K-means is a cluste
 
 Unfortunately, we found that the optimum number of clusters was 1 which indicates that there were not meaningful distinctions between the group of articles that we rated as socially impactful and the group of articles we rates as not being socially impactful as they were all put in the same cluster. The next optimum number of clusters was 8 but on further investigation, we could not find a significant relationship among the contents of each cluster and the assignment of socially impactful articles to clusters was random. Therefore, we have decided not to include clustering in our final ensemble model. 
 
+# Results
+
 ## Model comparison
 
 ```{r, out.width = "400px", echo=FALSE}
@@ -211,12 +215,12 @@ An important aspect of the app’s server is the SQL query. First, the app conne
 _Predicting in Shiny._
 Within a renderText function, the title and URL columns from the table created in the reactive function are removed. This new table is used within the predict function to predict the probability of social impact from each model. These numbers are then added to vertical lines on the distributions.
 
-#Interface
+## Interface
 The app contains four rows. The top row contains the title of the app, “Is this Article Socially Impactful?” The row below contains a text input box that prompts the user to enter a URL as well as a location for the title of the corresponds to appear. Below this, a visualization using ggplot2 displays the distributions of probabilities for each of the models. Once an article is entered, vertical lines appear at the probabilities which are predicted by each model. The fourth row displays the probabilities from the three models as well as the average. The probabilities are each a different color that coordinate with the distributions and vertical lines of the visualization. A screenshot of the app is included below in figure 2.  
 
 ![](Screen Shot 2018-04-19 at 9.47.35 AM.png)
 
-#Limitations & Further Discussion
+# Limitations 
 
 Many of the variables in our model are connected and have high correlations. For instance, the `Returning_visitors` variable is linearly dependent with average views of returning visitors and averge minutes returning visitors. The models may be using variables like these that are connected and causing inefficiencies. 
 
@@ -226,7 +230,7 @@ Additionally, the pre-existing data was not randomly collected, nor did the popu
 
 Despite this limitation, our group made the decision that models which classified an article from any section would not be productive. In this case, there would likely be a high number of both type I and II errors. Some, like politics articles for example, may be over-classified as socially impactful whereas others, like entertainment articles, may be under-classified. 
 
-#Future Work
+# Future Work
 
 In the future, we hope to use other data collection methods to create a training set for our models. Possibly, adjusting our flowchart then utilizing AMT again may be one solution. We could also attempt to find other individuals to classify a number of articles. To solve the issues mentioned in the limitations section, this group would need to be larger and hopefully more representative of the entire population of those who read these articles. 
 
