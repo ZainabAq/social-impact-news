@@ -2,7 +2,8 @@
 #install.packages("rPython")
 library(shiny)
 library(dplyr)
-library(mosaic)
+library(ggplot2)
+# library(mosaic)
 # library(randomForest)
 # library(ParetoPosStable)
 # library(tree)
@@ -15,7 +16,7 @@ library(RMySQL)
 library(pROC)
 library(formattable)
 # library(skimr)
-library(sparkline)
+# library(sparkline)
 source("findstats.R")
 
 #data for graph 
@@ -102,7 +103,7 @@ fluidRow(
            tags$ul(
              tags$li("Total Words"), 
              tags$li("Views"), 
-             tags$li("Twitter Interactions")
+             tags$li("Other Interactions")
            )
     ),
     column(3,
@@ -110,9 +111,9 @@ fluidRow(
            strong(span(textOutput("log"), style="color:blue")),
            br(),
            tags$ul(
-             tags$li("Total Words"), 
-             tags$li("Negative1"), 
-             tags$li("Positive2")
+             tags$li("Average Views: Returning Visitors"), 
+             tags$li("Mobile Views"), 
+             tags$li("Smog Index")
            )
     ),
     column(3,
@@ -120,9 +121,9 @@ fluidRow(
            strong(span(textOutput("svm"), style='color:green')),
            br(),
            tags$ul(
-             tags$li("Facebook References"), 
-             tags$li("New visitors"), 
-             tags$li("Mobile Views")
+             tags$li("Total Words"), 
+             tags$li("Average Views: Returning Visitors"), 
+             tags$li("Internal Referrals")
            )
     ),
     column(3,
@@ -268,18 +269,16 @@ server <- function(input, output) {
   ##### trying to create a table
   
   output$sumtable <- renderTable({  
-  Variable <- c('Total words', 'Views', 'Twitter interactions', 'Negative1', 'Positive2','Facebook References', 'New visitors', 'Mobile views')
-  Value <- c(findvar(input$URL1, "total_words"), findvar(input$URL1, "Views"), findvar(input$URL1, "Tw_interactions"), 
-             findvar(input$URL1, "neg1"), findvar(input$URL1, "pos2"), findvar(input$URL1, "Fb_refs"),
-             findvar(input$URL1, "New_vis."), findvar(input$URL1, "Mobile_views"))
-  Median <- c(median(politics_s3$total_words), median(politics_s3$Views), median(politics_s3$Tw_interactions), 
-              median(politics_s3$neg1), median(politics_s3$pos2), median(politics_s3$Fb_refs), median(politics_s3$New_vis.), median(politics_s3$Mobile_views))
-  IQR <- c(IQR(politics_s3$total_words), IQR(politics_s3$Views), IQR(politics_s3$Tw_interactions), IQR(politics_s3$neg1),
-           IQR(politics_s3$pos2), IQR(politics_s3$New_vis.), IQR(politics_s3$Mobile_views))
-  Q1 <- c(quantile(politics_s3$total_words, 0.25), quantile(politics_s3$Views, 0.25), quantile(politics_s3$Tw_interactions, 0.25),
-          quantile(politics_s3$neg1, 0.25), quantile(politics_s3$pos2, 0.25), quantile(politics_s3$Fb_refs, 0.25), quantile(politics_s3$New_vis., 0.25), quantile(politics_s3$Mobile_views, 0.25))
-  Q2 <- c(quantile(politics_s3$total_words, 0.75), quantile(politics_s3$Views, 0.75), quantile(politics_s3$Tw_interactions, 0.75),
-          quantile(politics_s3$neg1, 0.75), quantile(politics_s3$pos2, 0.75), quantile(politics_s3$Fb_refs, 0.27), quantile(politics_s3$New_vis., 0.75), quantile(politics_s3$Mobile_views, 0.75))
+  Variable <- c('Total Words', 'Views', 'Other Interactions', 'Avg Views: Returning Vis', 'Mobile Views','Smog Index', 'Internal Referrals')
+  Value <- c(findvar(input$URL1, "total_words"), findvar(input$URL1, "Views"), findvar(input$URL1, "Other_int"), 
+             findvar(input$URL1, "Avg._views_ret._vis."), findvar(input$URL1, "Mobile_views"), findvar(input$URL1, "smog_index"),
+             findvar(input$URL1, "Internal_refs"))
+  Median <- c(median(politics_s3$total_words), median(politics_s3$Views), median(politics_s3$Other_int), 
+              median(politics_s3$Avg._views_ret._vis.), median(politics_s3$Mobile_views), median(politics_s3$smog_index), median(politics_s3$Internal_refs))
+  Q1 <- c(quantile(politics_s3$total_words, 0.25), quantile(politics_s3$Views, 0.25), quantile(politics_s3$Other_int, 0.25),
+          quantile(politics_s3$Avg._views_ret._vis., 0.25), quantile(politics_s3$Mobile_views, 0.25), quantile(politics_s3$smog_index, 0.25), quantile(politics_s3$Internal_refs, 0.25))
+  Q2 <- c(quantile(politics_s3$total_words, 0.75), quantile(politics_s3$Views, 0.75), quantile(politics_s3$Other_int, 0.75),
+          quantile(politics_s3$Avg._views_ret._vis., 0.75), quantile(politics_s3$Mobile_views, 0.75), quantile(politics_s3$smog_index, 0.27), quantile(politics_s3$Internal_refs, 0.75))
   
   # row_names <- c('Total words', 'Views', 'Twitter interactions', 'Negative1', 'Positive2', 'New visitors', 'Mobile views')
   table1 <- data.frame(Variable, Value, Median, Q1, Q2, row.names = NULL)
