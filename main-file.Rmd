@@ -667,7 +667,7 @@ step(m1,direction="both")
 #     Fb_interactions_10000 + total_words_10, family = binomial(link = "logit"), 
 #     data = train)
 
-m5<-glm(formula = impact ~ Avg._views_ret._vis. + Mobile_views + 
+m5<-glm(formula = impact ~ Avg._views_ret._vis. + Mobile_views_10000 + 
     smog_index + neg1 + neg2 + neg3 + neg5 + pos1 + pos2 + pos4 + 
     Li_ref + Engaged_hours + Other_refs_10000 + Fb_interactions_10000 + 
     total_words_10, family = binomial(link = "logit"), data = train)
