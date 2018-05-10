@@ -184,7 +184,7 @@ Looking across our models, the table above shows how each one looks at different
 
 We also looked at specificity, sensitivity, accuracy and AUROC values. 
 
-```{r, out.width = "400px", echo=FALSE}
+```{r, out.width = "401px", echo=FALSE}
 knitr::include_graphics("model-comp.png")
 ```
 
