@@ -2,7 +2,7 @@
 title: "main-file"
 output: html_document
 editor_options: 
-  chunk_output_type: inline
+  chunk_output_type: console
 ---
 
 ```{r setup, include=FALSE}
@@ -14,6 +14,8 @@ knitr::opts_chunk$set(echo = TRUE)
 library(readr)
 # change this according to your
 data_10000 <- read_csv("Raw data_10000 articles_Jul-Dec 2017.csv")
+politics = data_10000 %>% 
+  filter(Section == "Politics")
 ```
 
 
@@ -32,6 +34,7 @@ library(gbm)
 library(adabag)
 library(EnvStats)
 library(Hmisc)
+library(tidyr)
 
 ##removing na's and creating the existing metric
 Sint_PV <- data_10000%>%
@@ -157,42 +160,399 @@ m6
 confusionMatrix(m6)
 m6_estimates = predict(m6, clean_boost2)
 postResample(m6_estimates, as.factor(clean_boost2$Impact))
-```
-
 ##Accuracy 0.859, avg = 0.74
 
 
-###################################################################################################
 
 ##Merging Data
 politics_300 <- read_csv("text-stats-politics-300.csv")
-politics_ <- data_10000 %>%
+politics <- data_10000 %>%
   filter(Section == "Politics")
-politics_2 <- politics[1:300,]
+politics_4 <- politics[401:450,]
+write.table(politics_4, file="politics_401_450.csv", sep =",", row.names = F)
 politics_300 <- left_join(politics_300, politics_2, by = "URL")
 write.table(politics_300, file="politics-300-merged.csv", sep =",", row.names=F)
 politics_300 <- politics_300 %>% 
   na.omit()%>% 
   select(-ID, -URL, -text, -`Publish date`, -Authors, -Section, -Tags, -`Sort (Views)` , -Title)
 write.table(politics_300, file="politics-no-text-merged.csv", sep =",", row.names=F)
+```
+
+
+
+##Politics Model Analysis Minji
+```{r}
+##POLITICS 1300
+politics_text <- read_csv("text-data-nlp-politics.csv")
+politics_text = politics_text[1:1300,]
+politics_huff <- politics[1:1300,]
+politics_final <- left_join(politics_huff, politics_text, by = "URL")
+added_sent <- read_csv("politics_added_sentiment.csv")
+added_sent = added_sent %>%
+  select(URL, neg1, neg2, neg3, neg4, neg5, pos1, pos2, pos3, pos4, pos5)
+added_sent = added_sent[1:1300,]
+politics_final <- left_join(politics_final, added_sent, by = "URL")
+politics_total_rated <- read_csv("total_1300_impact_scores.csv")
+politics_final <- left_join(politics_total_rated, politics_final, by ="URL")
+politics_final = politics_final %>%
+  select( -text, -`Publish date`, -Authors, -Section, -Tags, -`Sort (Views)`)
+politics_final = politics_final %>%
+  mutate(Other_Social_ref = `Social refs` - (`Fb refs`+`Tw refs`))%>%
+  mutate(Li_ref = as.factor(ifelse(is.na(`Li refs`), 0, 1))) %>% 
+  mutate(Pi_ref = as.factor(ifelse(is.na(`Pi refs`), 0, 1))) %>% 
+  mutate(Other_int = `Social interactions` - (`Fb interactions` + `Tw interactions`)) %>%
+  mutate(Li_int = as.factor(ifelse(is.na(`Li interactions`), 0 , 1))) %>%
+  mutate(Pi_int = as.factor(ifelse(is.na(`Pi interactions`), 0 , 1)))
+
+politics_final = politics_final %>%
+  select( -`Li refs`, -`Pi refs`, -`Li interactions`, -`Pi interactions`, -ID, -`Social interactions`, -`Social refs`)
+
+NA_find <-as.data.frame(is.na(politics_final))
+
+##10 missing variables.
+##1 row had no social media refs/interaction at all. 
+##3 had no faulty URL 
+##5 had No NLP and Sentiments 
+##3 had No Sentiments
+politics_final <- politics_final[-c(290, 303, 398, 399, 678, 680, 1079, 1151, 1162, 1174),]
+
+dulplicated <- as.data.frame(duplicated(politics_final) | duplicated(politics_final, fromLast = TRUE))
+
+politics_final <- politics_final[-c(446, 546, 693, 744, 1177, 1258),]
+
+dulplicated_check2 <- as.data.frame(duplicated(politics_final) | duplicated(politics_final, fromLast = TRUE))
+
+NA_find2 <- as.data.frame(is.na(politics_final))
+
 
 
 ##Cleaning data 
 spaceless <- function(x) {colnames(x) <- gsub(" ", "_", colnames(x));x}
 hless <- function(x) {colnames(x) <- gsub("-", "_", colnames(x));x}
-politics_300 <- spaceless(politics_300)
-politics_300 <- hless(politics_300)
-names(politics_300)
+politics_final <- spaceless(politics_final)
+politics_final <- hless(politics_final)
+names(politics_final)
+politics_final2 = politics_final %>% 
+  mutate(Impact = as.factor(ifelse(impact == 1, "Y", "N" ))) %>% 
+  mutate(Engaged_hours=Engaged_minutes/60)%>%
+  mutate(Returning_vis_10000=Returning_vis./10000)%>%
+  mutate(Search_refs_10000=Search_refs/10000)%>%
+  mutate(Internal_refs_10000=Internal_refs/10000)%>%
+  mutate(Other_refs_10000=Other_refs/10000)%>%
+  mutate(Direct_refs_10000=Direct_refs/10000)%>%
+  mutate(Fb_refs_10000=Fb_refs/10000)%>%
+  mutate(Tw_refs_10000=Tw_refs/10000)%>%
+  mutate(Fb_interactions_10000=Fb_interactions/10000)%>%
+  mutate(total_words_10=total_words/10)
+  
+dulplicated_check3 <- as.data.frame(duplicated(politics_final2) | duplicated(politics_final2, fromLast = TRUE))
+
+NA_find3 <- as.data.frame(is.na(politics_final2))  
+  
+  
+write.table(politics_final2, file="FINAL_DATA_FOR_MODELS.csv", sep = ",", row.names = F )
+
+
+
+
 #politics_300 <- politics_300 %>%
   #mutate(metric = Social_interactions/Views)
 
 ##Classification Tree of the whole dataset
-tree_p <- tree(as.factor(impact_score) ~., politics_300)
+tree_p <- tree(as.factor(impact) ~. -URL -Title, data =politics_final)
 summary(tree_p)
 plot(tree_p)
 text(tree_p, pretty=0)
 
+##Training and Testing
+set.seed(1)
+politics_train <- pf %>%
+  sample_frac(0.5)
 
+politics_test <- pf%>%
+  setdiff(politics_train)
+
+##Classication tree
+set.seed(5)
+mp0 <- tree(as.factor(impact) ~ . -URL -Title, data=politics_train)
+summary(mp0)
+plot(mp0)
+text(mp0, pretty = 0)
+mp0_estimates = predict(mp0, politics_test, type = "class")
+table(mp0_estimates, politics_test$impact)
+(329+90)/641 ##65% correct predictions 
+
+
+##Pruned tree with CV 
+set.seed(5)
+mp1 <- cv.tree(mp0, FUN = prune.misclass)
+plot(mp1$size, mp1$dev, type = "b")
+mp2 <- prune.misclass(mp0, best = 5)
+plot(mp2)
+text(mp2, pretty = 0)
+mp2_estimates = predict(mp2, politics_test, type = "class")
+table(mp2_estimates, politics_test$impact)
+(343+107)/641 ##70.2% correct predictions
+
+##Random Forest model 
+set.seed(5)
+mp3 <- randomForest(as.factor(impact) ~.-URL -Title,data=politics_train, importance = TRUE, ntree=2000, mtry=5)
+varImpPlot(mp3)
+mp3_estimates = predict(mp3, newdata = politics_test, n.trees = 2000) 
+table(mp3_estimates, politics_test$impact)
+(351+106)/641 ##71.3% correct predictions
+
+##Random Forest model with Conditional inference (uses statistical test rather than purity)
+set.seed(5)
+mp4 <- randomForest(as.factor(impact) ~.-URL -Title , data=politics_train, controls=cforest_unbiased(ntree=2000, mtry=5))
+varImpPlot(mp4)
+mp4_estimates = predict(mp4, newdata = politics_test, type = "response") 
+table(mp4_estimates, politics_test$impact)
+(347+107)/641 ## 70.8% correct predictions
+
+pf <- read_csv("FINAL_DATA_FOR_MODELS.csv")
+
+
+##Boosting with Classification 
+mp5<- gbm(impact ~ . -URL -Title, data = politics_train, distribution = "bernoulli", n.trees = 2000, cv.folds = 5, verbose = F)
+best.iter = gbm.perf(mp5, method = "cv")
+
+politics_boost <- politics_final %>%
+  mutate(Impact = as.factor(ifelse(impact == 1, "Y", "N" ))) %>%
+  select(-impact)
+
+set.seed(5)
+politics_boost_train <- politics_boost %>% 
+  sample_frac(0.5)
+
+politics_boost_test <- politics_boost %>% 
+  setdiff(politics_boost_train)
+  
+
+mp7 <- gbm(impact ~ . -URL -Title , data = politics_final, distribution = "bernoulli", cv.folds = 5, verbose = F, shrinkage = 0.01, interaction.depth = 1, n.trees = best.iter, n.minobsinnode = 1)
+summary(mp7)
+
+tune = expand.grid(interaction.depth = c(1, 2, 3),
+                    n.trees = (0:50)*50, 
+                    shrinkage = c(.1 ,.01, .001),
+                    n.minobsinnode = (1:10))
+
+set.seed(5)
+fitControl = trainControl(method="cv", summaryFunction =  twoClassSummary, classProbs = TRUE, number = 5, returnResamp = "all")
+mp6 <- train(Impact~.-URL -Title -impact -Engaged_hours -Returning_vis_10000 -Search_refs_10000 -Internal_refs_10000 -Other_refs_10000 -Direct_refs_10000 -Fb_refs_10000 -Tw_refs_10000 -Fb_interactions_10000 -total_words_10, data=pf, method="gbm", trControl=fitControl, tuneGrid = tune, verbose=FALSE,  metric = "ROC", distribution = "bernoulli")
+mp6
+varImp(mp6)
+
+
+confusionMatrix(mp6)
+predictions <- predict(object=mp6, pf, type='raw')
+mp6_estimates = predict(mp6, pf)
+confusionMatrix(mp6_estimates, as.factor(pf$Impact))
+confusionMatrix(predictions,  as.factor(pf$Impact))
+##Accuracy 82.7% CI (0.8053, 0.8474) Kappa 0.614
+postResample(predictions, as.factor(politics_boost$Impact))
+postResample(mp6_estimates, as.factor(politics_boost$Impact))
+
+
+# probabilites 
+politics_boost2 = politics_boost %>%
+  select(-URL, -Title)
+
+library(pROC)
+predictions2 <- predict(object=mp6, pf, type='prob')
+head(predictions2)
+
+#AUC socre
+auc = roc(ifelse(pf[,45] == "Y", 1, 0), predictions2[[2]])
+print(auc$auc)
+
+gbm.probs <- predict(mp6,pf,type="prob")
+head(gbm.probs)
+ 
+mp6.roc <- roc(pf$Impact, gbm.probs[, "Y"], levels = rev(levels(pf$Impact)))
+
+pf2 <- pf %>% 
+  mutate(Impact2 = as.factor(Impact))
+
+gbm.ROC <- roc(predictor=predictions2$Y,
+               response=pf2$Impact2,
+               levels=rev(levels(pf2$Impact2)))
+gbm.ROC$auc
+
+plot(gbm.ROC,main="GBM ROC")
+
+##0.914
+ 
+plot(varImp(mp6), nbars = 10)
+
+politics_tree <- pf %>% 
+  select(total_words, Views, Tw_interactions,total_sentences, Other_int, Fb_interactions, Visitors, pos3, readability, Mobile_views, smog_index, Tw_refs, Direct_refs, Fb_refs, pos1, neg2, grade_level, pos2, Desktop_views, Avg._views_ret._vis., Impact)
+
+
+set.seed(5)
+politics_tree_train <- politics_tree %>% 
+  sample_frac(0.5)
+
+politics_tree_test <- politics_tree %>% 
+  setdiff(politics_tree_train)
+
+boost_tree <- tree(as.factor(Impact) ~., politics_tree_train)
+summary(boost_tree)
+plot(boost_tree)
+text(boost_tree, pretty=0)
+boost_tree_estimates = predict(boost_tree, politics_tree_test, type = "class")
+table(boost_tree_estimates, politics_tree_test$Impact)
+
+(352+89)/(340+116+73+110)
+
+##0.7593
+
+fitboost <- rpart(as.factor(Impact) ~ ., method="class", data=politics_tree_train)
+plot(fitboost, uniform =TRUE)
+text(fitboost, use.n=TRUE, all=TRUE, cex=.8, pretty=0)
+prp(fitboost, type=1, extra=1, under.col = 3, varlen=15)
+rpart.plot(fitboost,                    # middle graph
+               extra=104, box.palette="GnBu",
+               branch.lty=3, shadow.col="gray", nn=TRUE)
+fit_tree_estimates = predict(fitboost, politics_tree_test, type = "class")
+table(fit_tree_estimates, politics_tree_test$Impact)
+(342+107)/(342+143+50+107) ##70%
+
+printcp(fitboost)
+summary(fitboost)
+fitboost
+
+save(mp6, file = "boostingFINALFINAL.rda")
+```
+
+#Turk Analysis
+```{r}
+Turk <- read_csv("Batch_3145287_batch_results.csv")
+
+
+Turk_time<-Turk %>%
+  filter(WorkTimeInSeconds >= 29)
+
+tidyTurk <- Turk %>% 
+  mutate(y = ifelse(Answer.categories == "category 1", 0, 1)) %>%
+  group_by(Input.URL) %>%
+  summarise(ys = paste(y, collapse = ","))%>%
+  separate(ys, into = c("y1", "y2", "y3"))
+
+##Correlations
+corTurk <- tidyTurk %>%
+  select(y1, y2, y3)
+
+corTurk$y1 <- as.numeric(corTurk$y1)
+corTurk$y2 <- as.numeric(corTurk$y2)
+corTurk$y3 <- as.numeric(corTurk$y3)
+check <- rcorr(as.matrix(corTurk))
+listcheck <- as.list(corTurk)
+check
+check2 <- corr.test(corTurk)
+check2
+
+random <- data.frame(replicate(3,sample(0:1,2500,rep=TRUE)))
+cor.test(corTurk$y1, corTurk$y2, alternative = "two.sided")
+cor.test(corTurk$y1, corTurk$y3, alternative = "two.sided")
+cor.test(corTurk$y2, corTurk$y3, alternative = "two.sided")
+cor.test(random$X1, random$X2)
+cor.test(random$X1, random$X3)
+cor.test(random$X2, random$X3)
+
+print(r.test(n=2500, 0.02238351, -0.03225803))
+print(r.test(n=2500, 0.0487411, -0.01529797))
+print(r.test(n=2500, 0.03599165, 0.009449315))
+
+#Majority rules
+Turk2 <- Turk_time %>% 
+  mutate(y = ifelse(Answer.categories == "category 1", 0, 1)) %>%
+  select(Input.URL, y)
+
+Turk2 <- data.table(Turk2)
+
+Turk2 <- Turk2[,as.numeric(names(which.max(table(y)))),by=Input.URL]
+
+Turk2 <- data.frame(Turk2)
+tally(Turk2$V1)
+
+#majority rules-- all 1
+Turk3 <- tidyTurk %>%
+  mutate(all1 = ifelse(y1 == 1 & y2 == 1 & y3 == 1, 1, 0))
+
+tally(Turk3$all1)
+
+```
+
+SQL DATA 
+```{r}
+##POLITICS 1300
+politics_text2 <- read_csv("text-data-nlp-politics.csv")
+politics_text2 = politics_text2[1301:2790,]
+politics_huff2 <- politics[1301:2794,]
+politics_sql <- left_join(politics_huff2, politics_text2, by = "URL")
+added_sent2 <- read_csv("politics_added_sentiment.csv")
+added_sent2 = added_sent2 %>%
+  select(URL, neg1, neg2, neg3, neg4, neg5, pos1, pos2, pos3, pos4, pos5)
+added_sent2 = added_sent2[1301:2790,]
+politics_sql <- left_join(politics_sql, added_sent2, by = "URL")
+politics_sql = politics_sql %>%
+  select( -text, -`Publish date`, -Authors, -Section, -Tags, -`Sort (Views)`)
+politics_sql = politics_sql %>%
+  mutate(Other_Social_ref = `Social refs` - (`Fb refs`+`Tw refs`))%>%
+  mutate(Li_ref = as.factor(ifelse(is.na(`Li refs`), 0, 1))) %>% 
+  mutate(Pi_ref = as.factor(ifelse(is.na(`Pi refs`), 0, 1))) %>% 
+  mutate(Other_int = `Social interactions` - (`Fb interactions` + `Tw interactions`)) %>%
+  mutate(Li_int = as.factor(ifelse(is.na(`Li interactions`), 0 , 1))) %>%
+  mutate(Pi_int = as.factor(ifelse(is.na(`Pi interactions`), 0 , 1)))
+
+politics_sql = politics_sql %>%
+  select( -`Li refs`, -`Pi refs`, -`Li interactions`, -`Pi interactions`, -ID, -`Social interactions`, -`Social refs`)
+
+NA_find <-as.data.frame(is.na(politics_sql))
+##1494 obs
+
+politics_sql = politics_sql %>% 
+  na.omit()
+
+
+dulplicated <- as.data.frame(duplicated(politics_sql) | duplicated(politics_sql, fromLast = TRUE))
+
+
+##Cleaning data 
+spaceless <- function(x) {colnames(x) <- gsub(" ", "_", colnames(x));x}
+hless <- function(x) {colnames(x) <- gsub("-", "_", colnames(x));x}
+politics_sql <- spaceless(politics_sql)
+politics_sql <- hless(politics_sql)
+names(politics_sql)
+politics_sql = politics_sql %>% 
+  mutate(Engaged_hours=Engaged_minutes/60)%>%
+  mutate(Returning_vis_10000=Returning_vis./10000)%>%
+  mutate(Search_refs_10000=Search_refs/10000)%>%
+  mutate(Internal_refs_10000=Internal_refs/10000)%>%
+  mutate(Other_refs_10000=Other_refs/10000)%>%
+  mutate(Direct_refs_10000=Direct_refs/10000)%>%
+  mutate(Fb_refs_10000=Fb_refs/10000)%>%
+  mutate(Tw_refs_10000=Tw_refs/10000)%>%
+  mutate(Fb_interactions_10000=Fb_interactions/10000)%>%
+  mutate(total_words_10=total_words/10)
+  
+dulplicated_check3 <- as.data.frame(duplicated(politics_sql) | duplicated(politics_sql, fromLast = TRUE))
+
+NA_find3 <- as.data.frame(is.na(politics_sql))
+
+politics_sql = politics_sql %>%
+  mutate(impact = NA)%>% 
+  mutate(Impact = NA)
+
+politics_sql <- politics_sql[c("URL","impact", "Title","Visitors","Views" ,"Engaged_minutes", "New_vis.", "Returning_vis.", "Avg._views_new_vis.", "Avg._views_ret._vis.", "Avg._minutes_new_vis.", "Avg._minutes_ret._vis.", "Desktop_views",          "Mobile_views", "Tablet_views", "Search_refs", "Internal_refs", "Other_refs", "Direct_refs", "Fb_refs","Tw_refs", "Fb_interactions", "Tw_interactions",        "readability","grade_level", "smog_index","total_words", "total_sentences", "neg1", "neg2", "neg3","neg4", "neg5", "pos1", "pos2", "pos3", "pos4", "pos5", "Other_Social_ref", "Li_ref", "Pi_ref", "Other_int", "Li_int", "Pi_int", "Impact", "Engaged_hours", "Returning_vis_10000", "Search_refs_10000", "Internal_refs_10000", "Other_refs_10000", "Direct_refs_10000", "Fb_refs_10000", "Tw_refs_10000", "Fb_interactions_10000", "total_words_10")]
+
+politics_sql <- bind_rows(politics_final2, politics_sql)
+
+NA_find4 <- as.data.frame(is.na(politics_sql))
+  
+write.table(politics_sql, file="FINAL_DATA_FOR_SQL.csv", sep = ",", row.names = F )
+```
 
 # Erina
 
@@ -234,71 +594,63 @@ MK2 <- MK2 %>%
 
 MK2 <- MK2[c(2,1,3)]
 
-##Random Forest model with Conditional inference (uses statistical test rather than purity)
-set.seed(5)
-mp4 <- randomForest(as.factor(impact_score) ~. , data=politics_train, controls=cforest_unbiased(ntree=2000, mtry=5))
-varImpPlot(mp4)
-mp4_estimates = predict(mp4, newdata = politics_test, type = "response") 
-table(mp4_estimates, politics_test$impact_score)
-(61+16)/115 ##67 correct predictions
-
-
-
-##Boosting with Classification 
-mp5<- gbm(impact_score ~., data = politics_300, distribution = "bernoulli", n.trees = 2000, cv.folds = 5, verbose = F)
-best.iter = gbm.perf(mp5, method = "cv")
-
 
 
 rated_300 <- rbind(MK2, JA2)
 rated_300 <- rbind(rated_300,ZA2)
 rated_300 <- rbind(rated_300,EF2)
-
-
-set.seed(5)
-fitControl = trainControl(method="cv", summaryFunction =  twoClassSummary, classProbs = TRUE, number = 5, returnResamp = "all")
-mp6 <- train(Impact~., data=politics_boost, method="gbm", trControl=fitControl, tuneGrid=data.frame(.n.trees=best.iter, .shrinkage=0.01, .interaction.depth=1, .n.minobsinnode=1), verbose=FALSE,  metric = "ROC", distribution = "bernoulli")
-varImp(mp6)
-
-confusionMatrix(mp6)
-mp6_estimates = predict(mp6, politics_boost)
-confusionMatrix(mp6_estimates, as.factor(politics_boost$Impact))
-postResample(mp6_estimates, as.factor(politics_boost$Impact))
-##Accuracy 0.909, (0.8638, 0.9426)
-
-###############################################################
-politics_url <- data_10000 %>%
-  filter(Section == "Politics") %>% 
-  select(URL) 
-
-politics_url <- politics_url[1:2500,]
-write.table(politics_url, file="politics-url.csv", sep =",", row.names=F)
-
-Turk <- read_csv("Batch_3145287_batch_results.csv")
-######################################
-
-Turk30<-Turk %>%
-  filter(WorkTimeInSeconds >= 30)
-
-tidyTurk <- Turk %>% 
-  mutate(y = ifelse(Answer.categories == "category 1", 0, 1)) %>%
-  group_by(Input.URL) %>%
-  summarise(ys = paste(y, collapse = ","))%>%
-  separate(ys, into = c("y1", "y2", "y3"))
-
-corTurk <- tidyTurk %>%
-  select(y1, y2, y3)
-
-check <- rcorr(as.matrix(corTurk))
-check
-
 ```
 
 
-=======
 # Erina
 #read packages
 ```{r}
+#join manually rated impact scores
+MK <- read_csv("C:/Users/choco/Desktop/SPRING 2018/Capstone/minji_50_impact.csv") %>%
+  select(-X1) #import original data
+JA <- read_csv("C:/Users/choco/Desktop/SPRING 2018/Capstone/julianna_50_impact.csv")  %>%
+  select(-X1)#import original data
+ZA <- read_csv("C:/Users/choco/Desktop/SPRING 2018/Capstone/zainab_50_impact.csv")  %>%
+  select(-X1)#import original data
+EF <- read_csv("C:/Users/choco/Desktop/SPRING 2018/Capstone/erina_50_impact.csv") %>%
+  select(-X1) #import original data
+
+MK$`Publish date` = as.character(MK$`Publish date`)
+JA$`Publish date` = as.character(JA$`Publish date`)
+ZA$`Publish date` = as.character(ZA$`Publish date`)
+EF$`Publish date` = as.character(EF$`Publish date`)
+
+rated_200 <- rbind(MK, JA)
+rated_200 <- rbind(rated_200,ZA)
+rated_200 <- rbind(rated_200,EF)
+
+write.csv(rated_200, file = "C:/Users/choco/Desktop/SPRING 2018/Capstone/rated_200.csv")
+
+MK2 <- read_csv("C:/Users/choco/Desktop/SPRING 2018/Capstone/minji_75_impact.csv")
+JA2 <- read_csv("C:/Users/choco/Desktop/SPRING 2018/Capstone/julianna_75_impact.csv")
+ZA2 <- read_csv("C:/Users/choco/Desktop/SPRING 2018/Capstone/zainab_75_impact.csv")
+EF2 <- read_csv("C:/Users/choco/Desktop/SPRING 2018/Capstone/erina_75_impact.csv")
+
+
+textual <- read_csv("C:/Users/choco/Desktop/SPRING 2018/Capstone/text-data-politics (3).csv") %>%
+  select(c(URL, Text))
+
+MK2 <- left_join(MK2, textual, by="URL")
+MK2 <- MK2 %>%
+  select(-Text.x) %>%
+  rename(Text = Text.y)
+
+MK2 <- MK2[c(2,1,3)]
+# data_1000_EF<- read_csv("Raw data_10000 articles_Jul-Dec 2017.csv")
+# names(data_1000_EF)
+# lm1 <- lm(log(`Engaged minutes`)~.-URL-Title-Authors-Tags,data=data_1000_EF)
+# summary(lm1)
+# anova(lm1)
+# 
+# plot(lm1)
+# summary(data_1000_EF)
+
+
 library(readr)
 library(tidytext)
 library(dplyr)
@@ -373,6 +725,7 @@ words <- words %>%
 
 neg5 <- words %>%
   group_by(URL) %>%
+  inner_join(afinn_neg5) %>%
 	inner_join(output) %>%
 	count(word, sort=TRUE)
 neg5$score <- "-5"
@@ -399,6 +752,8 @@ neg1 <- words %>%
   group_by(URL) %>%
 	inner_join(afinn_neg1) %>%
 	count(word, sort=TRUE)
+neg1$score <- "-1"
+
 neg1$score <- "-1"
 
 pos1 <- words %>%
