@@ -33,8 +33,10 @@ csl: plos.csl
 Our team used articles from a major online news publication and tried to create a tool that could automatically classify socially impactful articles from those that are not based on several aspects of the article. These aspects included the article’s presence in social media (e.g. number of likes, shares, etc.), amount of traffic (e.g page views, engaged minutes, etc.), level of readability and the sentiments associated with the words used.
 
 We define socially impactful articles as those that change the readers’ way of thinking. It can also bring someone to take action or change the way they act. Even if it does not make them change their views, if the article leaves an impression or makes readers think it can also be a socially impactful article as well. Therefore, some impacts that the article can have on readers are changing the way they think, leaving an impression, or reaffirming their ideas. It could also make readers change their habits or actions based on what they have read. These definitions were condensed into a flowchart that was used for future classification (as seen below). 
+```{r}
+#![Figure 1: social impact definition flow chart](tree.png)
+```
 
-![Figure 1: social impact definition flow chart](tree.png)
 
 #Pre-existing Data
 The data for this project were provided by the online news source which contained information for their top 10000 most-viewed articles. This news source collects and calculates data on many variables such as page views, returning visitors, and social interactions for each of their articles. The dataset given to us included 33 variables, the majority of which were numeric. To understand these metrics, we referred to the company’s application programming interface (API) which contained a description of 21 metrics. The API can be found at this address: [https://www.parse.ly/help/api/available-metrics/](https://www.parse.ly/help/api/available-metrics/). 
@@ -158,7 +160,7 @@ We found the accuracy of our model to be 79.44%. The sensitivity is 0.92 and the
 
 We fit a stepwise logistic regression as another way to determine whether an article had social impact. We optimized for AIC and found that `Average views by returning visitors`, `smog-index`, `Sentiments` (i.e. `neg1`, `neg2`, `neg3`, `neg4`, `pos1`, `pos2` and `pos4`), `LinkedIn & other referrals`, `Facebook interactions` and `Length` all had positive coefficients. In other words, a one unit increase in these variables increased the probability that an article would be socially impactful. However, interestingly, `Mobile views` and `Engaged Hours` had negative impact. We cannot say for certain why this may be the case. We suspected that it could be due to certain human behaviors linked to popularity of articles that are not socially impactful (e.g. if a cute cat video is shared on Facebook, it is more likely that someone will be seeing it on a mobile phone instead of a desktop; therefore, one point of further research can be to see if mobile views tends to favor non-socially impactful articles than socially impactful ones.) 
 
-![](odds ratio calculations.png)
+(odds ratio calculations.png)
 
 From our model, we also calculated the odds ratio for each of our variables. By looking at the numbers in the `OR` column, we can see how the odds of an article being socially impactful changes when a variable is increased by one unit. For example, `Li_ref` is a binary variable indicating whether there is at least one referral from LinkedIn or not. Thus, given that the odds ratio is 1.5, we can say that if there are two identical articles but one has a `Li_ref`=1 and another has `Li_ref`=0, the odds that the article with at least one LinkedIn referral will be socially impactful is 1.5 times that of the other one. As we look through the calculations, there are some interesting variables that stand out. For example, an article with 100% negative 5 sentiment seems to have a very big difference in the odds that it is socially impactful in comparison to an article with 0% negative 5 words, holding all other variables constant. In fact, this can be said for all of the sentiments in this model, although negative 5’s odds ratio seems to be exceptional. This may be the case because negative 5 words included many curse words which are usually used to be offensive and therefore brings about many emotions. Because we defined socially impactful articles as those that could change the way readers think, leave an impression, or reaffirm ideas, stronger negative words could have greater impact than weaker ones when it comes to determining social impact.
 
@@ -179,7 +181,7 @@ Unfortunately, we found that the optimum number of clusters was 1 which indicate
 ## Model comparison
 
 ```{r, out.width = "400px", echo=FALSE}
-knitr::include_graphics("model-comp-II.png")
+#knitr::include_graphics("model-comp-II.png")
 ```
 
 ```{r}
@@ -199,7 +201,7 @@ Looking across our models, the table above shows how each one looks at different
 We also looked at specificity, sensitivity, accuracy and AUROC values. 
 
 ```{r, out.width = "400px", echo=FALSE}
-knitr::include_graphics("model-comp.png")
+#knitr::include_graphics("model-comp.png")
 ```
 
 ## Shiny App
@@ -218,7 +220,7 @@ Within a renderText function, the title and URL columns from the table created i
 ## Interface
 The app contains four rows. The top row contains the title of the app, “Is this Article Socially Impactful?” The row below contains a text input box that prompts the user to enter a URL as well as a location for the title of the corresponds to appear. Below this, a visualization using ggplot2 displays the distributions of probabilities for each of the models. Once an article is entered, vertical lines appear at the probabilities which are predicted by each model. The fourth row displays the probabilities from the three models as well as the average. The probabilities are each a different color that coordinate with the distributions and vertical lines of the visualization. A screenshot of the app is included below in figure 2.  
 
-![](Screen Shot 2018-04-19 at 9.47.35 AM.png)
+(Screen Shot 2018-04-19 at 9.47.35 AM.png)
 
 # Limitations 
 
