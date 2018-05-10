@@ -1032,6 +1032,13 @@ m2<-glm(formula = impact ~ Views + Engaged_minutes + New_vis. + Avg._views_new_v
     data = train)
 
 
+<<<<<<< HEAD
+m5<-glm(formula = impact ~ Avg._views_ret._vis. + Mobile_views_10000 + 
+    smog_index + neg1 + neg2 + neg3 + neg5 + pos1 + pos2 + pos4 + 
+    Li_ref + Engaged_hours + Other_refs_10000 + Fb_interactions_10000 + 
+    total_words_10, family = binomial(link = "logit"), data = train)
+=======
+>>>>>>> 72cb56946f947f7a359b2b4dc1a5b041e5cd21e8
 
 #m5 <- glm(impact~ neg1 +neg3 +pos1 +pos2 +smog_index  + neg2 + total_words,family=binomial(link = "logit"), data=train)
 

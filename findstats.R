@@ -1,38 +1,29 @@
 #loading in data
 # data <- read.csv("politics-s3-merged.csv")
-# politics_s3 <- read.csv("politics-data-for-model-final2.csv")
+politics_s3 <- read.csv("politics-data-for-model-final2.csv")
 
-politics_s3 <- read.csv("FINAL_DATA_FOR_SQL.csv")
-
-# db <- src_mysql(dbname = "social_impact", host="scidb.smith.edu", port=3306, user = "capstone18", password="Stats4ever")
-# 
-# politics_s3 <- db %>%
-#   tbl("FINAL_POLITICS")
-
+# politics_s3 <- read.csv("FINAL_DATA_FOR_SQL.csv")
 
 #loading in models
 # load(file = 'boosting2.rda')
-# load(file = 'boostingfinal.rda')
+load(file = 'boostingfinal.rda')
 # load(file = 'boostingFINALFINAL.rda')
-load(file = 'GBM_Final.rda')
 # load(file = 'boosting.rda')
-# load(file = 'boosting_FINAL.rda')
 # load(file = 'svm.rda')
-# load(file = 'svm-final.rda')
-load(file = 'svmFinal.rda')
+load(file = 'svm-final.rda')
+# load(file = 'svmFinal.rda')
 # load(file = 'logistic_regression_model_s3.rda')
-# load(file = 'logistic_regression_model_s4.rda')
-load(file = 'logistic_regression_FINAL.rda')
+load(file = 'logistic_regression_model_s4.rda')
+# load(file = 'logistic_regression_FINAL.rda')
 
 #Creating new politics data, where impact is a character vector
 politics_boost <- politics_s3 %>%
-  select(-Impact, -impact)
-  # mutate(Li_ref = as.factor(Li_ref), Pi_ref = as.factor(Pi_ref), Li_int = as.factor(Li_int), Pi_int = as.factor(Pi_int))
+  mutate(Li_ref = as.factor(Li_ref), Pi_ref = as.factor(Pi_ref), Li_int = as.factor(Li_int), Pi_int = as.factor(Pi_int))
 
 #predicting from boosting and boosting 2 models
 # pred1 <- predict(mp6, politics_boost)
 
-pred <- predict(object=mpf6, politics_boost, type='prob')
+pred <- predict(object=mp6, politics_boost, type='prob')
 
 pred <- pred %>%
   select(Y)
@@ -47,11 +38,11 @@ pred_log <- predict(m5, politics_s3, type = "response")
 
 #SVM
 library(e1071)
-politics_svm <- politics_s3 %>%
-  rename(ImpactBinary = impact) %>%
-  select(-Impact, -ImpactBinary)
+# politics_svm <- politics_s3 %>%
+#   rename(ImpactBinary = impact) %>%
+#   select(-Impact, -URL, -Title)
 
-pred_svm <- predict(bestmod2, politics_svm, probability = TRUE)
+pred_svm <- predict(bestmod, politics_s3, probability = TRUE)
 
 pred40 <- data.frame(attr(pred_svm, "probabilities"))
 
@@ -179,54 +170,45 @@ findvar <- function(x, y){
     select(y) %>%
     head(1)
   
-<<<<<<< HEAD
-  formattable::formattable(data)
-}
-
-parser <- function(){system('python helloworld.py')}
-
-csv <- function(){system('python simplecsv.py')}
-=======
   c(t(data7))
 }
 
-# findtable <- function(x, y){
-#     data10 <- politics_s3%>%
-#       mutate(yes_URL = ifelse(URL == x, 1, 0)) %>%
-#       arrange(desc(yes_URL)) %>%
-#       select(y) %>%
-#       head(1)
-#     
-#     formattable(data10)
-#   }
+findtable <- function(x, y){
+    data10 <- politics_s3%>%
+      mutate(yes_URL = ifelse(URL == x, 1, 0)) %>%
+      arrange(desc(yes_URL)) %>%
+      select(y) %>%
+      head(1)
+    
+    formattable(data10)
+  }
 
-# findtable1 <- function(x){
-#   data8 <- politics_s3%>%
-#     mutate(yes_URL = ifelse(URL == x, 1, 0)) %>%
-#     arrange(desc(yes_URL)) %>%
-#     select(`Total words` = total_words, Views, `TW interactions` = Tw_interactions) %>%
-#     head(1)
-#   
-#   formattable(data8)
-# }
-# 
-# findtable2 <- function(x){
-#   data9 <- politics_s3%>%
-#     mutate(yes_URL = ifelse(URL == x, 1, 0)) %>%
-#     arrange(desc(yes_URL)) %>%
-#     select(`Total words` = total_words,`Negative1` = neg1, `Positive2` =pos2) %>%
-#   head(1)
-#   
-#   formattable(data9)
-# }
-# 
-# findtable3 <- function(x){
-#   data11 <- politics_s3%>%
-#     mutate(yes_URL = ifelse(URL == x, 1, 0)) %>%
-#     arrange(desc(yes_URL)) %>%
-#     select(`FB references` = Fb_refs, `New visitors` = New_vis., `Mobile views` = Mobile_views) %>%
-#     head(1)
-#   
-#   formattable(data11)
-# }
->>>>>>> ccc8a4477109ea922b5999cc0112b14ce786239f
+findtable1 <- function(x){
+  data8 <- politics_s3%>%
+    mutate(yes_URL = ifelse(URL == x, 1, 0)) %>%
+    arrange(desc(yes_URL)) %>%
+    select(`Total words` = total_words, Views, `TW interactions` = Tw_interactions) %>%
+    head(1)
+  
+  formattable(data8)
+}
+
+findtable2 <- function(x){
+  data9 <- politics_s3%>%
+    mutate(yes_URL = ifelse(URL == x, 1, 0)) %>%
+    arrange(desc(yes_URL)) %>%
+    select(`Total words` = total_words,`Negative1` = neg1, `Positive2` =pos2) %>%
+  head(1)
+  
+  formattable(data9)
+}
+
+findtable3 <- function(x){
+  data11 <- politics_s3%>%
+    mutate(yes_URL = ifelse(URL == x, 1, 0)) %>%
+    arrange(desc(yes_URL)) %>%
+    select(`FB references` = Fb_refs, `New visitors` = New_vis., `Mobile views` = Mobile_views) %>%
+    head(1)
+  
+  formattable(data11)
+}
