@@ -67,7 +67,7 @@ We wrote a Python script that takes in the URL as input and scrapes the webpage 
 
 We decided to supplement the social media statistics we got from our client with some basic text mining statistics that give us some information about the text. As discussed earlier, since the task at hand is to judge the impact of the articles, we made the assumption that there would be some relationship between the text itself and the impact it creates. 
 
-We wrote a script in Python for this purpose using the textstat Python package.The script takes as input the text of the articles (obtained from the parser) and outputs the computed statistics. Specifically, we calculate the following five statistics: 
+We wrote a script in Python for this purpose using the textstat Python package [@textstat].The script takes as input the text of the articles (obtained from the parser) and outputs the computed statistics. Specifically, we calculate the following five statistics: 
 
 1. *word_count: This calculates the number of words in the text.
 2. sentence_count: This calculates the number of sentences in the text.
@@ -141,9 +141,9 @@ Lastly, we created a classification tree using the top 20 variables selected fro
 
 ## Support Vector Machines
 
-An SVM is a vector space-based classification machine learning method where the goal is to find a decision boundary between two classes that is maximally far from any point in the training data (possibly discounting some points as outliers or noise).
+An SVM is a vector space-based classification machine learning method where the goal is to find a decision boundary between two classes that is maximally far from any point in the training data (possibly discounting some points as outliers or noise)[@MLbook].
 
-Our main motivation for using Support Vector Machines to classify the articles was that SVMs are known to perform well in text classification tasks, especially with small training sets. We use the e1071 package in R and trained the SVM on our entire set of 1284 classified articles. 
+Our main motivation for using Support Vector Machines to classify the articles was that SVMs are known to perform well in text classification tasks, especially with small training sets. We use the e1071 [@e1071] package in R and trained the SVM on our entire set of 1284 classified articles. 
 
 A kernel is a compact representation of the similarity in the dataset. Since we are working with multidimensional data, we tried linear, polynomial, sigmoid and radial kernels to see which one gave us the highest accuracy.After cross-validation and tuning, we found that a radial kernel performs best on our data with a low cost and high gamma value.
 
