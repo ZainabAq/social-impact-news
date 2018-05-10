@@ -71,13 +71,11 @@ We decided to supplement the social media statistics we got from our client with
 
 We wrote a script in Python for this purpose using the textstat Python package [@textstat].The script takes as input the text of the articles (obtained from the parser) and outputs the computed statistics. Specifically, we calculate the following five statistics: 
 
-1. *word_count: This calculates the number of words in the text.
+1. word_count: This calculates the number of words in the text.
 2. sentence_count: This calculates the number of sentences in the text.
-3. readability_score: This calculates the Flesch Reading Ease Score which is helpful to access the ease of readability in a document and ranges from 0 to 100 where 0 is difficult to read and 100 is easy to read.
-4. grade_level: This is calculated using the Automated Readability Index which outputs a number that approximates the grade level needed to comprehend the given text. This ranges from 1 to 12. 
-5. smog_index: This calculates the a statistics called Simple Measure of Gobbledygook for the given text. In simple terms, smog index calculates the difficulty level of a sentences based on the number of words that are polysyllabic. It ranges from 5 to 22 which corresponds to the age of the reader who can understand the given text. 
-
-
+3. readability_score: This calculates the Flesch Reading Ease Score which is helpful to access the ease of readability in a document and ranges from 0 to 100 where 0 is difficult to read and 100 is easy to read [@wikipedia_2018].
+4. grade_level: This is calculated using the Automated Readability Index which outputs a number that approximates the grade level needed to comprehend the given text. This ranges from 1 to 12 [@senter1967automated]. 
+5. smog_index: This calculates the a statistics called Simple Measure of Gobbledygook for the given text. In simple terms, smog index calculates the difficulty level of a sentences based on the number of words that are polysyllabic. It ranges from 5 to 22 which corresponds to the age of the reader who can understand the given text [@mclaughlin2008smog].
 
 #### Sentiment Analysis
 We used the `tidytext` package’s `AFINN` lexicon as an effort to have an idea about what sentiments were present in each article without manually going through each one of them. `AFINN` consists of around 2500 words and phrases scored between -5 to +5. The numbers reflect the severity of the word (e.g. "breathtaking" seems stronger than "relieve" which are positive 5 and 1 words respectively) and the signs imply the positivity of the word.
@@ -147,7 +145,11 @@ An SVM is a vector space-based classification machine learning method where the 
 
 Our main motivation for using Support Vector Machines to classify the articles was that SVMs are known to perform well in text classification tasks, especially with small training sets. We use the e1071 [@e1071] package in R and trained the SVM on our entire set of 1284 classified articles. 
 
-A kernel is a compact representation of the similarity in the dataset. Since we are working with multidimensional data, we tried linear, polynomial, sigmoid and radial kernels to see which one gave us the highest accuracy.After cross-validation and tuning, we found that a radial kernel performs best on our data with a low cost and high gamma value.
+A kernel is a compact representation of the similarity in the dataset. Since we are working with multidimensional data, we tried linear, polynomial, sigmoid and radial kernels to see which one gave us the highest accuracy. After cross-validation and tuning, we found that a radial kernel performs best on our data with a low cost and high gamma value.
+
+There are two tuning parameters for an SVM:
+1. Gamma: 
+2. Cost:
 
 ```{r, out.width = "400px", echo=FALSE}
 knitr::include_graphics("roc-curve.png")
@@ -191,7 +193,6 @@ We also looked at specificity, sensitivity, accuracy and AUROC values.
 
 ```{r, out.width = "401px", echo=FALSE}
 knitr::include_graphics("model-comp.png")
-
 ```
 
 ## Shiny App
