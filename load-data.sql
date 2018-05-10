@@ -1,5 +1,5 @@
 USE social_impact;
--- DROP TABLE IF EXISTS PoliticsArticlesFinal;
+DROP TABLE IF EXISTS PoliticsAll;
 -- 
 CREATE TABLE PoliticsAll(
     URL VARCHAR(255) NOT NULL default '',
@@ -60,3 +60,8 @@ CREATE TABLE PoliticsAll(
     Total_words_10 INT(255) NOT NULL default 0,
     PRIMARY KEY(URL)
     );
+
+LOAD DATA LOCAL INFILE '/tmp/FINAL_DATA_FOR_SQL.csv' INTO TABLE PoliticsAll
+    FIELDS TERMINATED BY ',' LINES TERMINATED BY '\r\n';
+    
+SELECT SUM(1) AS num_articles FROM PoliticsAll;
