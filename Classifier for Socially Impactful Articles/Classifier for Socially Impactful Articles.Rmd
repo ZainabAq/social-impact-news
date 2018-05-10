@@ -139,7 +139,7 @@ Using the `caret` package in R [@Kuhn09thecaret], the gradient boosting model sp
 
 Lastly, we created a classification tree using the top 20 variables selected from the boosting tree using `rpart` package in R [@rpart], shown in figure 4. 
 
-![Figure 4: Classification tree using top 20 variables selected from GBM](classification tree.png)
+![Figure 4: Classification tree using top 20 variables selected from GBM](classification Tree.png)
 
 ## Support Vector Machines
 
@@ -184,24 +184,14 @@ Unfortunately, we found that the optimum number of clusters was 1 which indicate
 #knitr::include_graphics("model-comp-II.png")
 ```
 
-```{r}
-#may want to just replace with a screenshot...
-a<-c("Model", "SVM", "GBM", "Logistic Regression")
-b<- c("Predictor#1 ", "Total words", "Total words", "Average views for returning visitors")
-c<- c("Predictor#2", "Average views for returning visitors", "Views", "Mobile Views")
-d<-c("Predictor#3", "Smog index", "Other interactions", "Smog Index")
-e<-c("Predictor#4", "Internal references", "Tw interactions", "Negative 1")
-f<-c("Predictor#5", "Positive 4", "Fb interactions", "Negative 2")
-g<-c("Predictor#6", "Engaged mins", "Visitors", "Negative 3")
-data.frame(c(a,b,c,d,e,f,g))
-```
-
 Looking across our models, the table above shows how each one looks at different variables and has different strengths. For example, the SVM and GBM are very good at knowing which articles are socially impactful but logistic regression is better at knowing which are not socially impactful. We think that because the models look at different variables, it may be reflecting on what strengths these articles have. For example, the GBM model places an emphasis on `FB interaction` which none of the other models are able to do. Therefore, if an article has an exceptionally high or low number of facebook interactions, its results may be very different from the other articles.
 
 We also looked at specificity, sensitivity, accuracy and AUROC values. 
 
-```{r, out.width = "400px", echo=FALSE}
-#knitr::include_graphics("model-comp.png")
+
+```{r, out.width = "401px", echo=FALSE}
+knitr::include_graphics("model-comp.png")
+
 ```
 
 ## Shiny App
@@ -239,6 +229,8 @@ In the future, we hope to use other data collection methods to create a training
 We also plan on investigating the variables in our model and make determinations of whether they are necessary and if there are any we could exclude to simplify our models. 
 
 We also hope to expand our interface to other sections outside of politics too.  
+
+We would also like to explore other models. 
 
 # References {#references .unnumbered}
 http://www2.imm.dtu.dk/pubdb/views/publication_details.php?id=6010
