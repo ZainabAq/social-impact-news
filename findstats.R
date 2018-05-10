@@ -9,3 +9,7 @@ findstats <- function(x){
   
   formattable::formattable(data)
 }
+
+parser <- function(){system('python helloworld.py')}
+
+csv <- function(){system('python simplecsv.py')}
