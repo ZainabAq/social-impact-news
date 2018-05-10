@@ -18,10 +18,10 @@ address:
     address: Statistical & Data Sciences, 1 Chapin Way Northampton, Massachusetts 01063
     
 abstract: |
-  Our team used articles from a major Online news publication and tried to create a tool that could automatically classify socially impactful articles from those that are not. Socially impactful articles are those that can change the way readers think, leave an impression on them, or reaffirm their ideas. It could also make readers change their habits or actions based on what they have read. Some variables we analyzed include social media (e.g. Facebook referrals), article readability and sentiment. We trained three models (tree, SVM and logistic regression) to have several approaches in identifying socially impactful articles. We created a tool through Shiny, a web application framework, to create a user-friendly interface that displays the results of these models plus an average of the three. Our tool provides several scores that serve as simple guidelines for readers curious to know the probability of an article being socially impactful or not without reading its contents. It also provides information on the overall strengths and emphasis on each model and what the distribution of variables are. Through this information, users are able to decide for themselves the best model score to use for a particular article. 
+  Our aim is to create a metric to measure how socially impactful an article is. We used articles from the politics section of a major online news publishing house for this purpose. We define an article to be socially impactful if the topic being discussed is important, if it can change the way readers think, reaffirm their thinking, or leave an impression on them. For our classifier, we used a dataset that contained social media statistics for each article (such as page views, Facebook comments etc.), some basic NLP statistics for the text of the article and sentiment analysis of the text. We manually classified the articles as 0 if they are not socially impactful and 1 if they are. We then trained three models (Gradient Boosting trees, Support Vector Machines, and Logistic Regression) and predicted probabilities for each article. We present our results in a Shiny application with a user-friendly interface that displays the results of our models. The application also provides information on the important predictors for each model and the overall distribution of probabilities. Through this information, users are able to decide for themselves the best model score to use for a particular article. 
   
 author_summary: |
-  We are students at Smith College enrolled in the SDS 410 Capstone course in the Statistical & Data Sciences Department.
+  We are students at Smith College enrolled in the SDS 410: Capstone in the Statistical & Data Sciences Department.
 
 bibliography: mybibfile.bib
 output: rticles::plos_article
@@ -104,10 +104,23 @@ However, this sentiment analysis has some limitations. The first is that the tex
 -other data cleaning (MK?)
 
 ## MySQL database
-Once we had the data cleaned, we uploaded it on the MySQL Server database. Even though we are currently only working with 900 articles, we wanted to make sure that our project is scalable. Putting the dataset in a database also unified the schema for our different models. 
+Once we had the data cleaned, we uploaded it on a MySQL Server database. Even though we are currently only working with around 2700 articles, we wanted to make sure that our project is scalable. Putting the dataset in a database also unified the schema for our different models. 
 
 
 #Models
+
+We used various machine learning models for our classification problem. Our explanatory variables were the social media, NLP, and sentiment statistics whereas our response variable was our classification of the article as 0 or 1.
+
+To evaluate our models, we used four criteria:
+
+1. Specificity: Correctly identified socially impactful articles or 1's 
+2. Sensitivity: Correctly identified non-socially impactful articles or 0's
+3. Area under Receiver Operating Curve: The probability that the classifier will assign a higher score to a randomly chosen positive example than to a randomly chosen negative example. 
+4. Accuracy: Rate of correct predictions. 
+
+In the end, we decided to use gradient boosting trees, support vector machines, and logistic regression. 
+
+The base line comparison for our models is the null model which has an accuracy of 63%. This is because we classified  37% of the articles as socially impactful so if a model were to guess everything as not being socially impactful, it would be correct 63% of the time. 
 
 ##Decision Tree
 Decision trees offer facilitated interpretation that is simple and easy to understand. Decision trees provide comprehensive analysis of each decision and partitions the data accordingly. We chose to use gradient boosting as one of our model because it avoids over fitting. Boosting reduces variance, unlike other decision tree models. Given a baseline model, boosting fits a decision tree to the residuals from the baseline model. Thus, Boosting grows trees sequentially allowing the next tree to be fitted into a function to update their residuals. Since boosting learns information from previous trees, the error rate is also usually lower than other forest models.
@@ -116,28 +129,17 @@ Using the `caret` package in R, the gradient boosting model split the data inter
 
 ## Support Vector Machines
 
-An SVM is a vector space based machine learning method where the goal is to find a decision boundary between two classes that is maximally far from any point in the training data (possibly discounting some points as outliers or noise).
+An SVM is a vector space-based classification machine learning method where the goal is to find a decision boundary between two classes that is maximally far from any point in the training data (possibly discounting some points as outliers or noise).
 
-Our main motivation for using Support Vector Machines to classify the articles was that SVMs are known to perform well in text classification tasks, especially with small training sets. We use the e1071 package in R and trained the SVM on 70% training data from our classified articles. When we predicted on the remaining 30% of the data, we found that the testing RMSE was 64%.
+Our main motivation for using Support Vector Machines to classify the articles was that SVMs are known to perform well in text classification tasks, especially with small training sets. We use the e1071 package in R and trained the SVM on our entire set of 1284 classified articles. 
 
-After cross-validation and tuning, we found that a radial kernel performs best on our data with a low cost and high gamma value.
+A kernel is a compact representation of the similarity in the dataset. Since we are working with multidimensional data, we tried linear, polynomial, sigmoid and radial kernels to see which one gave us the highest accuracy.After cross-validation and tuning, we found that a radial kernel performs best on our data with a low cost and high gamma value.
 
-A kernel is a compact representation of the similarity in the dataset. Since we are working with multidimensional data, we tried linear, polynomial, sigmoid and radial kernels to see which one gave the lowest training RMSE. 
+```{r, out.width = "400px", echo=FALSE}
+knitr::include_graphics("roc-curve.png")
+```
 
-We also iterated through different cost functions and realized that the SVM performs the best with a low cost which means that there is a high error on the training set compared to the testing set. We also had high gamma parameter which indicates that there is  high standard deviation between the points. 
-
-We found that the ten most significant predictors for the SVM, in order of significance, are: 
-
-1. Total words
-2. Visitors
-3. Positivity score
-4. Mobile views
-5. Smog index
-6. Grade level
-7. Readability score
-8. Returning visitors
-9. Average minutes per new visitor
-10. Negativity score
+We found the accuracy of our model to be 79.44%. The sensitivity is 0.92 and the specificity is 0.56. The AUROC value is 0.87.
 
 
 ##Logistic Regression. (to be changed due to changes in data + variables/model)
@@ -162,6 +164,10 @@ Unfortunately, we found that the optimum number of clusters was 1 which indicate
 
 ## Model comparison
 
+```{r, out.width = "400px", echo=FALSE}
+knitr::include_graphics("model-comp-II.png")
+```
+
 ```{r}
 #may want to just replace with a screenshot...
 a<-c("Model", "SVM", "GBM", "Logistic Regression")
@@ -176,6 +182,11 @@ data.frame(c(a,b,c,d,e,f,g))
 
 Looking across our models, the table above shows how each one looks at different variables and has different strengths. For example, the SVM and GBM are very good at knowing which articles are socially impactful but logistic regression is better at knowing which are not socially impactful. We think that because the models look at different variables, it may be reflecting on what strengths these articles have. For example, the GBM model places an emphasis on `FB interaction` which none of the other models are able to do. Therefore, if an article has an exceptionally high or low number of facebook interactions, its results may be very different from the other articles.
 
+We also looked at specificity, sensitivity, accuracy and AUROC values. 
+
+```{r, out.width = "400px", echo=FALSE}
+knitr::include_graphics("model-comp.png")
+```
 
 ## Shiny App
 
@@ -190,18 +201,18 @@ An important aspect of the app’s server is the SQL query. First, the app conne
 _Predicting in Shiny._
 Within a renderText function, the title and URL columns from the table created in the reactive function are removed. This new table is used within the predict function to predict the probability of social impact from each model. These numbers are then added to vertical lines on the distributions.
 
-_Interface._
+#Interface
 The app contains four rows. The top row contains the title of the app, “Is this Article Socially Impactful?” The row below contains a text input box that prompts the user to enter a URL as well as a location for the title of the corresponds to appear. Below this, a visualization using ggplot2 displays the distributions of probabilities for each of the models. Once an article is entered, vertical lines appear at the probabilities which are predicted by each model. The fourth row displays the probabilities from the three models as well as the average. The probabilities are each a different color that coordinate with the distributions and vertical lines of the visualization. A screenshot of the app is included below in figure 2.  
 
 ![](Screen Shot 2018-04-19 at 9.47.35 AM.png)
 
 #Limitations & Further Discussion
 
-Many of the variables in our model are connected and have high correlations. For instance, the `social interactions` variable is simply a summation of the facebook, twitter, pinterest, and linkedin interactions. The models may be using variables like these that are connected and causing inefficiencies. 
+Many of the variables in our model are connected and have high correlations. For instance, the `social interactions` variable is linearly dependent facebook, twitter, pinterest, and linkedin interactions. The models may be using variables like these that are connected and causing inefficiencies. 
 
-Our choice to subset our data to only politics articles may also be considered a limitation. Instead of being able to classify any article from our news source, it is only appropriate to use our models to classify Politics articles. Other sections may require different variables to classify articles and our models cannot be generalized to them.
+Our choice to subset our data to only politics articles may also be considered a limitation. Instead of being able to classify any article from our news source, it is only appropriate to use our models to classify politics articles. Other sections may require different variables to classify articles and our models cannot be generalized to them.
 
-Despite this limitation, our group made the decision that models which classified an article from any section would not be productive. In this case, there would likely be a high number of both type I and II errors. Some, like politics articles for example, may be over-classified as socially impactful whereas others, like comedy articles, may be under-classified. 
+Despite this limitation, our group made the decision that models which classified an article from any section would not be productive. In this case, there would likely be a high number of both type I and II errors. Some, like politics articles for example, may be over-classified as socially impactful whereas others, like entertainment articles, may be under-classified. 
 
 #Future Work
 
@@ -209,7 +220,7 @@ In the future, we hope to use other data collection methods to create a training
 
 We also plan on investigating the variables in our model and make determinations of whether they are necessary and if there are any we could exclude to simplify our models. 
 
-We also hope to expand our interface to other sections outside of Politics too.  
+We also hope to expand our interface to other sections outside of politics too.  
 
 # References {#references .unnumbered}
 http://www2.imm.dtu.dk/pubdb/views/publication_details.php?id=6010
