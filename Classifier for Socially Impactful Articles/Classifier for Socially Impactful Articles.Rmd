@@ -156,7 +156,7 @@ There are two tuning parameters for an SVM:
 2. Cost:
 
 ```{r, out.width = "400px", echo=FALSE}
-knitr::include_graphics("roc-curve.png")
+#knitr::include_graphics("roc-curve.png")
 ```
 
 We found the accuracy of our model to be 79.44%. The sensitivity is 0.92 and the specificity is 0.56. The AUROC value is 0.87.
