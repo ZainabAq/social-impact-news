@@ -18,7 +18,7 @@ address:
     address: Statistical & Data Sciences, 1 Chapin Way Northampton, Massachusetts 01063
     
 abstract: |
-Our aim is to create a metric to measure how socially impactful an article is. We used articles from the politics section of a major online news publishing house for this purpose. We define an article to be socially impactful if the topic being discussed is important, if it can change the way readers think, reaffirm their thinking, or leave an impression on them. For our classifier, we used a dataset that contained social media statistics for each article (such as page views, Facebook comments etc.), some basic NLP statistics for the text of the article and sentiment analysis of the text. We manually classified the articles as 0 if they are not socially impactful and 1 if they are. We then trained three models (Gradient Boosting trees, Support Vector Machines, and Logistic Regression) and predicted probabilities for each article. We present our results in a Shiny application with a user-friendly interface that displays the results of our models. The application also provides information on the important predictors for each model and the overall distribution of probabilities. Through this information, users are able to decide for themselves the best model score to use for a particular article. 
+  Our aim is to create a metric to measure how socially impactful an article is. We used articles from the politics section of a major online news publishing house for this purpose. We define an article to be socially impactful if the topic being discussed is important, if it can change the way readers think, reaffirm their thinking, or leave an impression on them. For our classifier, we used a dataset that contained social media statistics for each article (such as page views, Facebook comments etc.), some basic NLP statistics for the text of the article and sentiment analysis of the text. We manually classified the articles as 0 if they are not socially impactful and 1 if they are. We then trained three models (Gradient Boosting trees, Support Vector Machines, and Logistic Regression) and predicted probabilities for each article. We present our results in a Shiny application with a user-friendly interface that displays the results of our models. The application also provides information on the important predictors for each model and the overall distribution of probabilities. Through this information, users are able to decide for themselves the best model score to use for a particular article. 
   
 author_summary: |
   We are students at Smith College enrolled in the SDS 410: Capstone in the Statistical & Data Sciences Department.
@@ -120,6 +120,8 @@ To evaluate our models, we used four criteria:
 
 In the end, we decided to use gradient boosting trees, support vector machines, and logistic regression. 
 
+The base line comparison for our models is the null model which has an accuracy of 63%. This is because we classified  37% of the articles as socially impactful so if a model were to guess everything as not being socially impactful, it would be correct 63% of the time. 
+
 ##Decision Tree
 Decision trees offer facilitated interpretation that is simple and easy to understand. Decision trees provide comprehensive analysis of each decision and partitions the data accordingly. We chose to use gradient boosting as one of our model because it avoids over fitting. Boosting reduces variance, unlike other decision tree models. Given a baseline model, boosting fits a decision tree to the residuals from the baseline model. Thus, Boosting grows trees sequentially allowing the next tree to be fitted into a function to update their residuals. Since boosting learns information from previous trees, the error rate is also usually lower than other forest models.
 
@@ -129,26 +131,11 @@ Using the `caret` package in R, the gradient boosting model split the data inter
 
 An SVM is a vector space-based classification machine learning method where the goal is to find a decision boundary between two classes that is maximally far from any point in the training data (possibly discounting some points as outliers or noise).
 
-Our main motivation for using Support Vector Machines to classify the articles was that SVMs are known to perform well in text classification tasks, especially with small training sets. We use the e1071 package in R and trained the SVM on 70% training data from our classified articles. When we predicted on the remaining 30% of the data, we found that our accuracy for prediction was .
+Our main motivation for using Support Vector Machines to classify the articles was that SVMs are known to perform well in text classification tasks, especially with small training sets. We use the e1071 package in R and trained the SVM on our entire set of 1284 classified articles. 
 
-After cross-validation and tuning, we found that a radial kernel performs best on our data with a low cost and high gamma value.
+A kernel is a compact representation of the similarity in the dataset. Since we are working with multidimensional data, we tried linear, polynomial, sigmoid and radial kernels to see which one gave us the highest accuracy.After cross-validation and tuning, we found that a radial kernel performs best on our data with a low cost and high gamma value.
 
-A kernel is a compact representation of the similarity in the dataset. Since we are working with multidimensional data, we tried linear, polynomial, sigmoid and radial kernels to see which one gave the lowest training RMSE. 
-
-We also iterated through different cost functions and realized that the SVM performs the best with a low cost which means that there is a high error on the training set compared to the testing set. We also had high gamma parameter which indicates that there is  high standard deviation between the points. 
-
-We found that the ten most significant predictors for the SVM, in order of significance, are: 
-
-1. Total words
-2. Visitors
-3. Positivity score
-4. Mobile views
-5. Smog index
-6. Grade level
-7. Readability score
-8. Returning visitors
-9. Average minutes per new visitor
-10. Negativity score
+We found the accuracy of our model to be 79.44%. The sensitivity is 0.92 and the specificity is 0.56. The AUROC value is 0.87.
 
 
 ##Logistic Regression. (to be changed due to changes in data + variables/model)
@@ -187,6 +174,11 @@ data.frame(c(a,b,c,d,e,f,g))
 
 Looking across our models, the table above shows how each one looks at different variables and has different strengths. For example, the SVM and GBM are very good at knowing which articles are socially impactful but logistic regression is better at knowing which are not socially impactful. We think that because the models look at different variables, it may be reflecting on what strengths these articles have. For example, the GBM model places an emphasis on `FB interaction` which none of the other models are able to do. Therefore, if an article has an exceptionally high or low number of facebook interactions, its results may be very different from the other articles.
 
+We also looked at specificity, sensitivity, accuracy and AUROC values. 
+
+```{r, out.width = "400px", echo=FALSE}
+knitr::include_graphics("model-comp.png")
+```
 
 ## Shiny App
 
