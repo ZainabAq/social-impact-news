@@ -1,0 +1,23 @@
+---
+title: "Data Visualization for Human Perception"
+author: "Minji Kang"
+date: "4/29/2018"
+output: 
+  rmarkdown::html_document: 
+    toc: true
+    number_sections: true
+    theme: lumen
+    css: custom.css
+---
+
+```{r, message=FALSE, echo=FALSE}
+library(rmarkdown)
+library()
+```
+
+
+###1. __What is Data Visualization? Why is it Important?__
+
+Data Visualization is a visual representation, usually in graphical display, of an statistical information. Statisical information is abstract because it does not describe things that are not physical (Few, 2013). Thus, the translation of abstract information into perceptial attributes facilitates the way we process information. Visualizing big and complex data through graphs and charts is easier than looking over spreadsheets or reports. 
+
+###2. __History of Data Visualization__
