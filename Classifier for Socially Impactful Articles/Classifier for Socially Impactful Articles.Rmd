@@ -151,12 +151,8 @@ Our main motivation for using Support Vector Machines to classify the articles w
 
 A kernel is a compact representation of the similarity in the dataset. Since we are working with multidimensional data, we tried linear, polynomial, sigmoid and radial kernels to see which one gave us the highest accuracy. After cross-validation and tuning, we found that a radial kernel performs best on our data with a low cost and high gamma value.
 
-There are two tuning parameters for an SVM:
-1. Gamma: 
-2. Cost:
-
 ```{r, out.width = "400px", echo=FALSE}
-#knitr::include_graphics("roc-curve.png")
+knitr::include_graphics("roc-curve.png")
 ```
 
 We found the accuracy of our model to be 79.44%. The sensitivity is 0.92 and the specificity is 0.56. The AUROC value is 0.87.
@@ -187,7 +183,7 @@ Unfortunately, we found that the optimum number of clusters was 1 which indicate
 ### Model comparison
 
 ```{r, out.width = "400px", echo=FALSE}
-#knitr::include_graphics("model-comp-II.png")
+knitr::include_graphics("model-comp-II.png")
 ```
 
 Looking across our models, the table above shows how each one looks at different variables and has different strengths. For example, the SVM and GBM are very good at knowing which articles are socially impactful but logistic regression is better at knowing which are not socially impactful. We think that because the models look at different variables, it may be reflecting on what strengths these articles have. For example, the GBM model places an emphasis on `FB interaction` which none of the other models are able to do. Therefore, if an article has an exceptionally high or low number of Facebook interactions, its results may be very different from the other articles.
