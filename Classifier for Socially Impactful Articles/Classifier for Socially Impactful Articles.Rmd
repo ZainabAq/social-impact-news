@@ -195,7 +195,7 @@ knitr::include_graphics("model-comp.png")
 ### Shiny App
 
 _Creation of Shiny App._
-In order to display the results of our models, a web application was created using the Shinypackage in R [@Shiny]. The basic mechanism of the app starts with a user input of an article’s URL. In order for the app to correctly run, the URL must be one of the 2700 found in our SQL table. From there, multiple models predict the article’s probability of social impact.
+In order to display the results of our models, a web application was created using the Shinypackage in R [@shiny]. The basic mechanism of the app starts with a user input of an article’s URL. In order for the app to correctly run, the URL must be one of the 2700 found in our SQL table. From there, multiple models predict the article’s probability of social impact.
 
 _Method._
 Three of our models are displayed on the app: the optimized boosting model, support vector machine model, and the multiple logistic model. Each model was saved as R data (.rda) files.  These files were loaded into an r script at the top of the app file. 
