@@ -32,11 +32,13 @@ csl: plos.csl
 
 Our team used articles from a major online news publication and tried to create a tool that could automatically classify socially impactful articles from those that are not based on several aspects of the article. These aspects included the article’s presence in social media (e.g. number of likes, shares, etc.), amount of traffic (e.g page views, engaged minutes, etc.), level of readability and the sentiments associated with the words used.
 
-We define socially impactful articles as those that change the readers’ way of thinking. It can also bring someone to take action or change the way they act. Even if it does not make them change their views, if the article leaves an impression or makes readers think it can also be a socially impactful article as well. Therefore, some impacts that the article can have on readers are changing the way they think, leaving an impression, or reaffirming their ideas. It could also make readers change their habits or actions based on what they have read. These definitions were condensed into a flowchart that was used for future classification (as seen below). 
-```{r}
-#![Figure 1: social impact definition flow chart](tree.png)
-```
+We define socially impactful articles as those that change the readers’ way of thinking. It can also bring someone to take action or change the way they act. Even if it does not make them change their views, if the article leaves an impression or makes readers think it can also be a socially impactful article as well. Therefore, some impacts that the article can have on readers are changing the way they think, leaving an impression, or reaffirming their ideas. It could also make readers change their habits or actions based on what they have read. These definitions were condensed into a flowchart that was used for future classification (See Figure 1).
 
+#![Figure 1: social impact definition flow chart](tree.png)
+
+###Importance of Social Impact
+
+This project will allow for the news publication to 
 
 #### Pre-existing Data
 
