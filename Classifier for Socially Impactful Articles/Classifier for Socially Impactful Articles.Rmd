@@ -60,7 +60,7 @@ We decided that this project needed to start with only one section. The section 
 
 # Data
 
-## Collection of Additional Data
+### Collection of Additional Data
 
 #### Text Mining
 
@@ -96,7 +96,7 @@ Following the results of the first MTurk, we launched another set of tasks that 
 
 Finally, the data collection was conducted by our group members going through each articles and classifying the articles ourselves following the flow chart in Figure 1. We classified a total of 1300 articles and used the 1300 articles as the training set.
 
-#### Data Preparation
+### Data Preparation
 
 Once the NLP and sentiment analysis was completed, the original pre-existing data, the new NLP, sentiment analysis, and the social impact classification outcome were compiled together. In order to build supervised learning models, only numerical vectors were selected for data analysis. Thus variables such as `Tags`, `Published_Date`, `Author` and the parsed `Text` was removed. However we kept `URL` and `Title` variables, but those were not included in the models. Additionally, six duplicated rows were removed. 
 
