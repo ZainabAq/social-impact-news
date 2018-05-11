@@ -31,9 +31,9 @@ politics_s3_find <- politics_s3 %>%
 # Define UI ----
 ui <- fluidPage(
   
-titlePanel("Is This Article Socially Impactful?"),
+  titlePanel("Is This Article Socially Impactful?"),
   hr(),
-
+  
   fluidRow(
     column(3,
            textInput("URL1", label = "URL of Article:")
@@ -42,55 +42,55 @@ titlePanel("Is This Article Socially Impactful?"),
            h5("Title:"),
            h4(tableOutput("title"))
     )
-),
-fluidRow(
-  column(7,
-         plotOutput("plot")
   ),
-  column(5,
-         h6("Summary Statistics", align = "Center"),
-         br(),
-         tableOutput("sumtable"))
-         # tabsetPanel(type = "tabs",
-         #             tabPanel("Summary Statistics",
-         #                      br(),
-         #                      # tableOutput("sumstats1"),
-         #                      # br(),
-         #                      # tableOutput("sumstats2"),
-         #                      # br(),
-         #                      # tableOutput("sumstats3"),
-         #                      
-         #                      # textOutput("var1"),
-         #                      # sparklineOutput("sparkline1"),
-         #                      # textOutput("var2"),
-         #                      # sparklineOutput("sparkline2"),
-         #                      # textOutput("var3"),
-         #                      # sparklineOutput("sparkline3"),
-         #                      # textOutput("var4"),
-         #                      # sparklineOutput("sparkline4"),
-         #                      # textOutput("var5"),
-         #                      # sparklineOutput("sparkline5"),
-         #                      # textOutput("var6"),
-         #                      # sparklineOutput("sparkline6"),
-         #                      # textOutput("var7"),
-         #                      # sparklineOutput("sparkline7")
-         #                      tableOutput("sumtable")
-         #             )
-                     # tabPanel("Choose Variable",
-                     #          br(),
-                     #          selectInput("variable", "Variable:",
-                     #                      choices= colnames(politics_s3_find), width = "100%"),
-                     #          br(),
-                     # #          # tableOutput("var1")),
-                     # #          plotOutput("plot2")
-                     #          h4("For this article:", align = "center"),
-                     #          h4(textOutput("var"), align = "center"))
-                     # # tabPanel("Distribution of Variable",
-                     # #          br(),
-                     # #          plotOutput("plot2"))
-                     # )
-  
-),
+  fluidRow(
+    column(7,
+           plotOutput("plot")
+    ),
+    column(5,
+           h6("Summary Statistics", align = "Center"),
+           br(),
+           tableOutput("sumtable"))
+    # tabsetPanel(type = "tabs",
+    #             tabPanel("Summary Statistics",
+    #                      br(),
+    #                      # tableOutput("sumstats1"),
+    #                      # br(),
+    #                      # tableOutput("sumstats2"),
+    #                      # br(),
+    #                      # tableOutput("sumstats3"),
+    #                      
+    #                      # textOutput("var1"),
+    #                      # sparklineOutput("sparkline1"),
+    #                      # textOutput("var2"),
+    #                      # sparklineOutput("sparkline2"),
+    #                      # textOutput("var3"),
+    #                      # sparklineOutput("sparkline3"),
+    #                      # textOutput("var4"),
+    #                      # sparklineOutput("sparkline4"),
+    #                      # textOutput("var5"),
+    #                      # sparklineOutput("sparkline5"),
+    #                      # textOutput("var6"),
+    #                      # sparklineOutput("sparkline6"),
+    #                      # textOutput("var7"),
+    #                      # sparklineOutput("sparkline7")
+    #                      tableOutput("sumtable")
+    #             )
+    # tabPanel("Choose Variable",
+    #          br(),
+    #          selectInput("variable", "Variable:",
+    #                      choices= colnames(politics_s3_find), width = "100%"),
+    #          br(),
+    # #          # tableOutput("var1")),
+    # #          plotOutput("plot2")
+    #          h4("For this article:", align = "center"),
+    #          h4(textOutput("var"), align = "center"))
+    # # tabPanel("Distribution of Variable",
+    # #          br(),
+    # #          plotOutput("plot2"))
+    # )
+    
+  ),
   
   hr(),
   h4("Probabilities of Social Impact"),
@@ -134,51 +134,51 @@ fluidRow(
 ) 
 
 
-  # sidebarLayout(
-  #   
-  #   sidebarPanel(
-  #     textInput("URL1", label = "Enter URL of Article")
-  #     ),
-  #   
-  #   mainPanel(
-  #     
-  #     h5("Title of Article:"),
-  #     tableOutput("title"),
-  #     # h5("Probability of Social Impact based on Social Interactions:"),
-  #     # textOutput("pred1"),
-  #     # h5("Probaility of Social Impact based on SVM Model"),
-  #     # textOutput("pred2")
-  #     h5("Probability of Social Impact based on Optimized Boosting Model"),
-  #     textOutput("boosting2"),
-  #     # h5("Social Impact based on Boosting Model"),
-  #     # textOutput("boosting"),
-  #     h5("Probability of Social Impact based on HuffPost Model"),
-  #     textOutput("huff")
-  #     
-  #   )
-  #   
-  # ))
-  # 
+# sidebarLayout(
+#   
+#   sidebarPanel(
+#     textInput("URL1", label = "Enter URL of Article")
+#     ),
+#   
+#   mainPanel(
+#     
+#     h5("Title of Article:"),
+#     tableOutput("title"),
+#     # h5("Probability of Social Impact based on Social Interactions:"),
+#     # textOutput("pred1"),
+#     # h5("Probaility of Social Impact based on SVM Model"),
+#     # textOutput("pred2")
+#     h5("Probability of Social Impact based on Optimized Boosting Model"),
+#     textOutput("boosting2"),
+#     # h5("Social Impact based on Boosting Model"),
+#     # textOutput("boosting"),
+#     h5("Probability of Social Impact based on HuffPost Model"),
+#     textOutput("huff")
+#     
+#   )
+#   
+# ))
+# 
 
 
 # Define server logic ----
 server <- function(input, output) {
   
-  db <- src_mysql(dbname = "social_impact", host="scidb.smith.edu", port=3306, user = "capstone18", password="Stats4ever")
-  # 
-  the_article <- db %>%
-    tbl("FINAL_POLITICS") %>%
-    filter(URL == input$URL1) %>%
-    collect(n = Inf)
+  # db <- src_mysql(dbname = "social_impact", host="scidb.smith.edu", port=3306, user = "capstone18", password="Stats4ever")
+  # # 
+  # the_article <- db %>%
+  #   tbl("FINAL_POLITICS") %>%
+  #   filter(URL == input$URL1) %>%
+  #   collect(n = Inf)
   
   output$title <- renderText({
     findvar(input$URL1, "Title")
-    pull(the_article, "Title")
+    # pull(the_article, "Title")
   })
   
   output$boosting <- renderText({
     findvar(input$URL1, "predboosting")
-    predict(mpf6, newdata = input)
+    # predict(mpf6, newdata = the_article)
   })
   
   #Huffstat output
@@ -203,8 +203,8 @@ server <- function(input, output) {
   
   #############Summary Statistics
   output$var <- renderText({
-  end <- findvar(input$URL1, input$variable)
-  paste("•", end)
+    end <- findvar(input$URL1, input$variable)
+    paste("•", end)
   })
   
   # output$var1 <- renderText({
@@ -278,21 +278,21 @@ server <- function(input, output) {
   ##### trying to create a table
   
   output$sumtable <- renderTable({  
-  Variable <- c('Total Words', 'Views', 'Other Interactions', 'Avg Views: Returning Vis', 'Mobile Views','Smog Index', 'Internal Referrals')
-  Value <- c(findvar(input$URL1, "total_words"), findvar(input$URL1, "Views"), findvar(input$URL1, "Other_int"), 
-             findvar(input$URL1, "Avg._views_ret._vis."), findvar(input$URL1, "Mobile_views"), findvar(input$URL1, "smog_index"),
-             findvar(input$URL1, "Internal_refs"))
-  Median <- c(median(politics_s3$total_words), median(politics_s3$Views), median(politics_s3$Other_int), 
-              median(politics_s3$Avg._views_ret._vis.), median(politics_s3$Mobile_views), median(politics_s3$smog_index), median(politics_s3$Internal_refs))
-  Q1 <- c(quantile(politics_s3$total_words, 0.25), quantile(politics_s3$Views, 0.25), quantile(politics_s3$Other_int, 0.25),
-          quantile(politics_s3$Avg._views_ret._vis., 0.25), quantile(politics_s3$Mobile_views, 0.25), quantile(politics_s3$smog_index, 0.25), quantile(politics_s3$Internal_refs, 0.25))
-  Q2 <- c(quantile(politics_s3$total_words, 0.75), quantile(politics_s3$Views, 0.75), quantile(politics_s3$Other_int, 0.75),
-          quantile(politics_s3$Avg._views_ret._vis., 0.75), quantile(politics_s3$Mobile_views, 0.75), quantile(politics_s3$smog_index, 0.27), quantile(politics_s3$Internal_refs, 0.75))
-  
-  # row_names <- c('Total words', 'Views', 'Twitter interactions', 'Negative1', 'Positive2', 'New visitors', 'Mobile views')
-  table1 <- data.frame(Variable, Value, Median, Q1, Q2, row.names = NULL)
-  
-  formattable(table1, digits = 0)
+    Variable <- c('Total Words', 'Views', 'Other Interactions', 'Avg Views: Returning Vis', 'Mobile Views','Smog Index', 'Internal Referrals')
+    Value <- c(findvar(input$URL1, "total_words"), findvar(input$URL1, "Views"), findvar(input$URL1, "Other_int"), 
+               findvar(input$URL1, "Avg._views_ret._vis."), findvar(input$URL1, "Mobile_views"), findvar(input$URL1, "smog_index"),
+               findvar(input$URL1, "Internal_refs"))
+    Median <- c(median(politics_s3$total_words), median(politics_s3$Views), median(politics_s3$Other_int), 
+                median(politics_s3$Avg._views_ret._vis.), median(politics_s3$Mobile_views), median(politics_s3$smog_index), median(politics_s3$Internal_refs))
+    Q1 <- c(quantile(politics_s3$total_words, 0.25), quantile(politics_s3$Views, 0.25), quantile(politics_s3$Other_int, 0.25),
+            quantile(politics_s3$Avg._views_ret._vis., 0.25), quantile(politics_s3$Mobile_views, 0.25), quantile(politics_s3$smog_index, 0.25), quantile(politics_s3$Internal_refs, 0.25))
+    Q2 <- c(quantile(politics_s3$total_words, 0.75), quantile(politics_s3$Views, 0.75), quantile(politics_s3$Other_int, 0.75),
+            quantile(politics_s3$Avg._views_ret._vis., 0.75), quantile(politics_s3$Mobile_views, 0.75), quantile(politics_s3$smog_index, 0.27), quantile(politics_s3$Internal_refs, 0.75))
+    
+    # row_names <- c('Total words', 'Views', 'Twitter interactions', 'Negative1', 'Positive2', 'New visitors', 'Mobile views')
+    table1 <- data.frame(Variable, Value, Median, Q1, Q2, row.names = NULL)
+    
+    formattable(table1, digits = 0)
   })
   
   #summary table
@@ -312,7 +312,7 @@ server <- function(input, output) {
   # output$skimtable <- renderText({
   #   skim(politics_s3_graph, total_words)
   # })
-
+  
   
   # output$sumstats1 <- renderTable({
   #   findtable(input$URL1, "total_words")
@@ -362,23 +362,23 @@ server <- function(input, output) {
   # })
   
   #Xint 
-#   xint_var <- reactive({
-#     findvar(input$URL1, input$variable) 
-#   }) 
-#   
-#   output$plot2 <- renderPlot({
-#     
-#     # Render a barplot
-#     ggplot(data = politics_s3_graph, aes(variableInput())) +
-#       geom_density() +
-#       theme(axis.title.y = element_blank(), axis.text = element_text(size = 10),
-#             panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-#             panel.background = element_blank(), axis.ticks.y = element_blank(), axis.text.y = element_blank())+
-#       geom_vline(xintercept = xint_var(), size = 1) +
-#       labs(x = input$variable)
-#     
-#   })
-#   
+  #   xint_var <- reactive({
+  #     findvar(input$URL1, input$variable) 
+  #   }) 
+  #   
+  #   output$plot2 <- renderPlot({
+  #     
+  #     # Render a barplot
+  #     ggplot(data = politics_s3_graph, aes(variableInput())) +
+  #       geom_density() +
+  #       theme(axis.title.y = element_blank(), axis.text = element_text(size = 10),
+  #             panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+  #             panel.background = element_blank(), axis.ticks.y = element_blank(), axis.text.y = element_blank())+
+  #       geom_vline(xintercept = xint_var(), size = 1) +
+  #       labs(x = input$variable)
+  #     
+  #   })
+  #   
 }
 
 # Run the app ----

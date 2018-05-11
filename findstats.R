@@ -4,32 +4,36 @@
 
 politics_s3 <- read.csv("FINAL_DATA_FOR_SQL.csv")
 
-db <- src_mysql(dbname = "social_impact", host="scidb.smith.edu", port=3306, user = "capstone18", password="Stats4ever")
+# db <- src_mysql(dbname = "social_impact", host="scidb.smith.edu", port=3306, user = "capstone18", password="Stats4ever")
+# # 
+# politics_s3 <- db %>%
+#   tbl("FINAL_POLITICS") %>%
+#   collect(n = Inf)
 # 
-politics_s3 <- db %>%
-  tbl("FINAL_POLITICS") %>%
-  collect(n = Inf)
+# politics_s3 <- read.csv("politics-data-for-model-final2.csv")
 
+
+# politics_s3 <- read.csv("FINAL_DATA_FOR_SQL.csv")
 
 #loading in models
 # load(file = 'boosting2.rda')
 # load(file = 'boostingfinal.rda')
-# load(file = 'boostingFINALFINAL.rda')
 load(file = 'GBM_Final.rda')
+# load(file = 'boostingFINALFINAL.rda')
 # load(file = 'boosting.rda')
-# load(file = 'boosting_FINAL.rda')
 # load(file = 'svm.rda')
 # load(file = 'svm-final.rda')
-load(file = 'svmFinal.rda')
+# load(file = 'svmFinal.rda')
+load(file = 'svmFINALFINAL.rda')
 # load(file = 'logistic_regression_model_s3.rda')
 # load(file = 'logistic_regression_model_s4.rda')
-load(file = 'logistic_regression_FINAL.rda')
+load(file = 'logisitic_regression_final.rda')
 
 #Creating new politics data, where impact is a character vector
 politics_boost <- politics_s3 %>%
-  rename(Impact = ImpactBinary) %>%
   select(-Impact, -impact)
   # mutate(Li_ref = as.factor(Li_ref), Pi_ref = as.factor(Pi_ref), Li_int = as.factor(Li_int), Pi_int = as.factor(Pi_int))
+
 
 #predicting from boosting and boosting 2 models
 # pred1 <- predict(mp6, politics_boost)
@@ -50,8 +54,7 @@ pred_log <- predict(m5, politics_s3, type = "response")
 #SVM
 library(e1071)
 politics_svm <- politics_s3 %>%
-  rename(ImpactBinary = impact) %>%
-  select(-Impact, -ImpactBinary)
+  select(-Impact, -impact)
 
 pred_svm <- predict(bestmod2, politics_svm, probability = TRUE)
 
@@ -193,7 +196,7 @@ findvar <- function(x, y){
 #     
 #     formattable(data10)
 #   }
-
+# 
 # findtable1 <- function(x){
 #   data8 <- politics_s3%>%
 #     mutate(yes_URL = ifelse(URL == x, 1, 0)) %>%
