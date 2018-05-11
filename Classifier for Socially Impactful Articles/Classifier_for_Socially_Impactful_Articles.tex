@@ -184,7 +184,9 @@ change their habits or actions based on what they have read. These
 definitions were condensed into a flowchart that was used for future
 classification (See Figure 1).
 
-Figure 1: social impact definition flow chart{]}(tree.png)
+\begin{figure}
+\includegraphics[width=400px,height=300px]{flow-chart} \caption{flow chart of social impact}\label{fig:unnamed-chunk-1}
+\end{figure}
 
 \#\#\#Importance of Social Impact
 
@@ -492,15 +494,7 @@ boosting has three tuning parameters:
 \end{itemize}
 
 \begin{figure}
-\includegraphics[width=400px,height=300px]{roc_gbm} \caption{ROC curve of Gradient Boosting model}\label{fig:unnamed-chunk-1}
-\end{figure}
-
-\begin{figure}
-\includegraphics[width=400px,height=300px]{boost_VarImp} \caption{Variable Importance of boosting model}\label{fig:unnamed-chunk-2}
-\end{figure}
-
-\begin{figure}
-\includegraphics[width=400px,height=300px]{classification-Tree} \caption{ Classification tree using top 20 variables selected from GBM}\label{fig:unnamed-chunk-3}
+\includegraphics[width=400px,height=300px]{classification-Tree} \caption{ Classification tree using top 20 variables selected from GBM}\label{fig:unnamed-chunk-2}
 \end{figure}
 
 Using the \texttt{caret} package in R {[}7{]}, the gradient boosting
@@ -516,11 +510,19 @@ node was 8. Thus, these parameters were used for the final model. The
 gradient boosting model had an accuracy of 82.5\% and the 95\%
 confidence interval for accuracy was between 80\% and 84.5\%. In
 addition the model also showed high sensitivity value of 0.901, but a
-lower specificity value of 0.609. The ROC curve is shown in Figure 2.
+lower specificity value of 0.609. The ROC curve is shown in figure 2.
 Thus the model was positively classifying impactful articles better than
 negatively classifying impactful articles (AUROC = 0.911). The top 25
 most important variables of the boosting model results are shown in
-Figure 3.
+figure 3.
+
+\begin{figure}
+\includegraphics[width=400px,height=300px]{roc_gbm} \caption{ROC curve of Gradient Boosting model}\label{fig:unnamed-chunk-3}
+\end{figure}
+
+\begin{figure}
+\includegraphics[width=400px,height=300px]{boost_VarImp} \caption{Variable Importance of boosting model}\label{fig:unnamed-chunk-4}
+\end{figure}
 
 Lastly, we created a classification tree using the top 20 variables
 selected from the boosting tree using \texttt{rpart} package in R
@@ -541,7 +543,7 @@ package in R and trained the SVM on our entire set of 1284 classified
 articles {[}9{]}.
 
 \begin{figure}
-\includegraphics[width=400px,height=300px]{roc-curve} \caption{ROC Curve for SVM model}\label{fig:unnamed-chunk-4}
+\includegraphics[width=400px,height=300px]{roc-curve} \caption{ROC Curve for SVM model}\label{fig:unnamed-chunk-5}
 \end{figure}
 
 A kernel is a compact representation of the similarity in the dataset.
@@ -644,7 +646,7 @@ not to include clustering in our final ensemble model.
 \subsubsection{Model comparison}\label{model-comparison}}
 
 \begin{figure}
-\includegraphics[width=400px]{model-comp-II} \caption{Important predictors for each of the three models in the order of importance}\label{fig:unnamed-chunk-5}
+\includegraphics[width=400px]{model-comp-II} \caption{Important predictors for each of the three models in the order of importance}\label{fig:unnamed-chunk-6}
 \end{figure}
 
 Looking across our models, the table above shows how each one looks at
@@ -661,7 +663,7 @@ may be very different from the other articles.
 We also looked at specificity, sensitivity, accuracy and AUROC values.
 
 \begin{figure}
-\includegraphics[width=375px]{model-comp} \caption{Table comparing performance across the four models (including the null model)}\label{fig:unnamed-chunk-6}
+\includegraphics[width=375px]{model-comp} \caption{Table comparing performance across the four models (including the null model)}\label{fig:unnamed-chunk-7}
 \end{figure}
 
 \hypertarget{shiny-app}{%
@@ -711,7 +713,7 @@ distributions and vertical lines of the visualization. A screenshot of
 the app is included below in figure 7.
 
 \begin{figure}
-\includegraphics[width=400px,height=300px]{app} \caption{Screenshot of the app}\label{fig:unnamed-chunk-7}
+\includegraphics[width=400px,height=300px]{app} \caption{Screenshot of the app}\label{fig:unnamed-chunk-8}
 \end{figure}
 
 \hypertarget{limitations}{%
