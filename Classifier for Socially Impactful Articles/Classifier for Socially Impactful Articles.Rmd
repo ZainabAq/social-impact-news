@@ -20,9 +20,6 @@ address:
 abstract: |
   Our aim is to create a metric to measure how socially impactful an article is. We used articles from the politics section of a major online news publishing house for this purpose. We define an article to be socially impactful if the topic being discussed is important, if it can change the way readers think, reaffirm their thinking, or leave an impression on them. For our classifier, we used a dataset that contained social media statistics and traffic information for each article (such as page views, Facebook comments etc.), some basic NLP statistics for the text of the article, and sentiment analysis of the text. We manually classified the articles as 0 if they are not socially impactful and 1 if they are. We then trained three models (Gradient Boosting Model, Support Vector Machines, and Logistic Regression) and predicted probabilities for each article. We present our results in a Shiny application with a user-friendly interface that displays the results of our models. The application also provides information on the important predictors for each model and the overall distribution of probabilities. Through this information, users are able to decide for themselves the best model score to use for a particular article. 
   
-author_summary: |
-  We are students at Smith College enrolled in the SDS 410: Capstone in the Statistical & Data Sciences Department.
-
 bibliography: mybibfile.bib
 output: rticles::plos_article
 csl: plos.csl
@@ -68,7 +65,7 @@ We decided that this project needed to start with only one section. The section 
 
 We realized that all of our existing data tell us about the the behavioral data of each article (i.e what the reader is actively doing with each article). However, one of the problems specified by our client was that behavioral analysis is oftentimes not a good indicator of whether the article is socially impactful or not. This is because it fails to take the actual content of the articles into account. Thus in order to add another dimension to our data, we decided to retrieve the text of the articles from the URLs that were provided to us in the dataset. 
 
-We wrote a Python script that takes in the URL as input and scrapes the webpage to retrieve the text. We used the `BeautifulSoup` package in Python for this purpose. 
+We wrote a Python script that takes in the URL as input and scrapes the webpage to retrieve the text. We used the `BeautifulSoup` package in Python for this purpose [@BeautifulSoup]. 
 
 _Incorporating Natural Language Processing Statistics_
 We decided to supplement the social media statistics we got from our client with some basic text mining statistics that give us some information about the text. As discussed earlier, since the task at hand is to judge the impact of the articles, we made the assumption that there would be some relationship between the text itself and the impact it creates. 
@@ -134,28 +131,35 @@ Decision trees provide comprehensive analysis of each decision and partitions th
 * The shrinkage parameter: The rate at which boosting learns  [@MLbook].
 * Number of splits in each tree: controls the complexity of the model  [@MLbook]. 
 
-Using the `caret` package in R [@Kuhn09thecaret], the gradient boosting model split the data internally and ran its own training and testing models with five cross validation folds. The model also tuned the parameter with five cross validation folds. The optimal tuning parameters with the highest Receiver Operating Characteristics (ROC = 0.792) was 900 trees with shrinkage of 0.01, number of splits of 3. The `gbm` in the caret package offers another parameter that measures the minimum number of observations in tree’s terminal nodes. The optimal tuning parameter for the minimum number of observation in the terminal node was 8. Thus, these parameters were used for the final model. The gradient boosting model had an accuracy of 82.5% and the 95% confidence interval for accuracy was between 80% and 84.5%. In addition the model also showed high sensitivity value of 0.901, but a lower specificity value of 0.609. The ROC curve is shown in Figure 2. Thus the model was positively classifying impactful articles better than negatively classifying impactful articles. The top 25 most important variables of the boosting model results are shown in Figure 3. 
+```{r, out.width = "400px", out.height="300px", echo=FALSE, fig.cap="Classification tree using top 20 variables selected from GBM"}
+knitr::include_graphics("classification-Tree.png")
+```
 
-![Figure 2: ROC curve of Gradient Boosting model](roc_gbm.png)
+Using the `caret` package in R [@Kuhn09thecaret], the gradient boosting model split the data internally and ran its own training and testing models with five cross validation folds. The model also tuned the parameter with five cross validation folds. The optimal tuning parameters with the highest Receiver Operating Characteristics (ROC = 0.792) was 900 trees with shrinkage of 0.01, number of splits of 3. The `gbm` in the caret package offers another parameter that measures the minimum number of observations in tree’s terminal nodes. The optimal tuning parameter for the minimum number of observation in the terminal node was 8. Thus, these parameters were used for the final model. The gradient boosting model had an accuracy of 82.5% and the 95% confidence interval for accuracy was between 80% and 84.5%. In addition the model also showed high sensitivity value of 0.901, but a lower specificity value of 0.609. The ROC curve is shown in Figure 2. Thus the model was positively classifying impactful articles better than negatively classifying impactful articles. The top 25 most important variables of the boosting model results are shown in Figure 3.
 
-![Figure 3: Variable Importance of boostig model](boost_VarImp.png)
+```{r, out.width = "400px", out.height="300px", echo=FALSE, fig.cap='ROC curve of Gradient Boosting model'}
+knitr::include_graphics("roc_gbm.png")
+```
+
+```{r, out.width = "400px", out.height="300px", echo=FALSE, fig.cap='Variable Importance of boosting model'}
+knitr::include_graphics("boost_VarImp.png")
+```
 
 
 Lastly, we created a classification tree using the top 20 variables selected from the boosting tree using `rpart` package in R [@rpart], shown in figure 4. 
 
-![Figure 4: Classification tree using top 20 variables selected from GBM](classification Tree.png)
 
 #### Support Vector Machines
 
 An SVM is a vector space-based classification machine learning method where the goal is to find a decision boundary between two classes that is maximally far from any point in the training data (possibly discounting some points as outliers or noise)[@MLbook].
 
-Our main motivation for using Support Vector Machines to classify the articles was that SVMs are known to perform well in text classification tasks, especially with small training sets. We use the `e1071` [@e1071] package in R and trained the SVM on our entire set of 1284 classified articles. 
+Our main motivation for using Support Vector Machines to classify the articles was that SVMs are known to perform well in text classification tasks, especially with small training sets. We use the `e1071` package in R and trained the SVM on our entire set of 1284 classified articles [@e1071].
 
-A kernel is a compact representation of the similarity in the dataset. Since we are working with multidimensional data, we tried linear, polynomial, sigmoid and radial kernels to see which one gave us the highest accuracy. After cross-validation and tuning, we found that a radial kernel performs best on our data with a low cost and high gamma value.
-
-```{r, out.width = "400px", echo=FALSE}
+```{r, out.width = "400px", out.height="300px", echo=FALSE, fig.cap='ROC Curve for SVM model'}
 knitr::include_graphics("roc-curve.png")
 ```
+
+A kernel is a compact representation of the similarity in the dataset. Since we are working with multidimensional data, we tried linear, polynomial, sigmoid and radial kernels to see which one gave us the highest accuracy. After cross-validation and tuning, we found that a radial kernel performs best on our data with a low cost and high gamma value.
 
 We found the accuracy of our model to be 79.44%. The sensitivity is 0.92 and the specificity is 0.56. The AUROC value is 0.87.
 
@@ -184,7 +188,7 @@ Unfortunately, we found that the optimum number of clusters was 1 which indicate
 
 ### Model comparison
 
-```{r, out.width = "400px", echo=FALSE}
+```{r, out.width = "400px", fig.cap="Important predictors for each of the three models in the order of importance", echo=FALSE}
 knitr::include_graphics("model-comp-II.png")
 ```
 
@@ -193,7 +197,7 @@ Looking across our models, the table above shows how each one looks at different
 We also looked at specificity, sensitivity, accuracy and AUROC values. 
 
 
-```{r, out.width = "401px", echo=FALSE}
+```{r, out.width = "375px", echo=FALSE, fig.cap="Table comparing performance across the four models (including the null model)"}
 knitr::include_graphics("model-comp.png")
 ```
 
