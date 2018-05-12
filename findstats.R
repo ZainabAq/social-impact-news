@@ -12,7 +12,6 @@ politics_s3 <- read.csv("FINAL_DATA_FOR_SQL.csv")
 # 
 # politics_s3 <- read.csv("politics-data-for-model-final2.csv")
 
-
 # politics_s3 <- read.csv("FINAL_DATA_FOR_SQL.csv")
 
 #loading in models

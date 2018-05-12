@@ -27,7 +27,6 @@ politics_s3_graph <- politics_s3 %>%
 politics_s3_find <- politics_s3 %>%
   select(-Title, -URL, -impact, -Impact)
 
-
 # Define UI ----
 ui <- fluidPage(
   
